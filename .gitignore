@@ -117,3 +117,5 @@ target/
 
 # Артефакты копирования из Windows (NTFS alternate data streams)
 *:Zone.Identifier
+
+.env
