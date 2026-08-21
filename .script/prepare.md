@@ -78,3 +78,13 @@ yc lockbox secret create \
     вопрос. Я могу передать запрос специалисту». Отвечай кратко, понятно и по делу. Если вопрос не относится к
     поддержке, вежливо откажись отвечать.
 
+# Шаг 4
+## Создать ТГ бота и секреты
+### Создать бота
+    см. @BotFather в ТГ
+### Добавить токен в lockbox
+```bash
+yc lockbox secret create \
+  --name tg-bot-token \
+  --payload '[{"key":"TELEGRAM_BOT_TOKEN","text_value":"...:."}]'
+```
