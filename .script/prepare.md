@@ -79,12 +79,12 @@ yc lockbox secret create \
     поддержке, вежливо откажись отвечать.
 
 # Шаг 4
-## Создать ТГ бота и секреты
-### Создать бота
-    см. @BotFather в ТГ
-### Добавить токен в lockbox
+## Создать почту, app-password и секрет
+### Создать почту, app-password
+    см. gmail.com
+### Добавить app-password в lockbox
 ```bash
 yc lockbox secret create \
-  --name tg-bot-token \
-  --payload '[{"key":"TELEGRAM_BOT_TOKEN","text_value":"...:."}]'
+  --name email-credentials \
+  --payload '[{"key":"password","text_value":"..."}]'
 ```

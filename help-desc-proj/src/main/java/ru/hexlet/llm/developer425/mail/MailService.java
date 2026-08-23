@@ -28,27 +28,33 @@ public class MailService {
     private final int batch;
     private final Session session;
 
-    public MailService(int batch, String password, String email) {
+    public MailService(int batch, String password, String email,
+                       String smtpHost, String smtpPort, String imapHost, String imapPort) {
         if (batch < 1) {
             throw new IllegalArgumentException("Batch must be grater then 1");
         }
         this.batch = batch;
+        Objects.requireNonNull(password, "password must be set");
+        Objects.requireNonNull(email, "email must be set");
+        Objects.requireNonNull(smtpHost, "smtpHost must be set");
+        Objects.requireNonNull(smtpPort, "smtpPort must be set");
+        Objects.requireNonNull(imapHost, "imapHost must be set");
+        Objects.requireNonNull(imapPort, "imapPort must be set");
         Properties properties = new Properties();
 
         properties.put(MAIL_TRANSPORT_PROTOCOL, "smtp");
-        properties.put(MAIL_SMTP_HOST, "smtp.gmail.com");
-        properties.put(MAIL_SMTP_PORT, "587");
+        properties.put(MAIL_SMTP_HOST, smtpHost);
+        properties.put(MAIL_SMTP_PORT, smtpPort);
         properties.put(MAIL_SMTP_AUTH, "true");
         properties.put(MAIL_SMTP_STARTTLS_ENABLE, "true");
 
         properties.put(MAIL_STORE_PROTOCOL, "imap");
-        properties.put(MAIL_IMAP_HOST, "imap.gmail.com");
-        properties.put(MAIL_IMAP_PORT, "993");
+        properties.put(MAIL_IMAP_HOST, imapHost);
+        properties.put(MAIL_IMAP_PORT, imapPort);
         properties.put(MAIL_IMAP_SSL_ENABLE, "true");
 
 
         Authenticator authenticator = new Authenticator() {
-
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(email, password);
@@ -60,7 +66,7 @@ public class MailService {
     public static void main(String[] args) {
         MailService service = new MailService(2,
                 "...",
-                "...");
+                "...", "smtp.gmail.com", "587", "imap.gmail.com", "993");
         try {
             service.processUnreadMessages(null);
         } catch (Exception e) {
