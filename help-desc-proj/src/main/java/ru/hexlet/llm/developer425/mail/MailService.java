@@ -23,28 +23,31 @@ public class MailService {
     private static final String MAIL_IMAP_HOST = "mail.imap.host";
     private static final String MAIL_IMAP_PORT = "mail.imap.port";
     private static final String MAIL_IMAP_SSL_ENABLE = "mail.imap.ssl.enable";
+    private static final String MAIL_SMTP_FROM = "mail.smtp.from";
 
 
     private final int batch;
     private final Session session;
 
-    public MailService(int batch, String password, String email,
-                       String smtpHost, String smtpPort, String imapHost, String imapPort) {
+    public MailService(int batch, String username, String password,
+                       String smtpHost, String smtpPort, String imapHost, String imapPort, String fromEmail) {
         if (batch < 1) {
             throw new IllegalArgumentException("Batch must be grater then 1");
         }
         this.batch = batch;
         Objects.requireNonNull(password, "password must be set");
-        Objects.requireNonNull(email, "email must be set");
+        Objects.requireNonNull(username, "username must be set");
         Objects.requireNonNull(smtpHost, "smtpHost must be set");
         Objects.requireNonNull(smtpPort, "smtpPort must be set");
         Objects.requireNonNull(imapHost, "imapHost must be set");
         Objects.requireNonNull(imapPort, "imapPort must be set");
+        Objects.requireNonNull(fromEmail, "fromEmail must be set");
         Properties properties = new Properties();
 
         properties.put(MAIL_TRANSPORT_PROTOCOL, "smtp");
         properties.put(MAIL_SMTP_HOST, smtpHost);
         properties.put(MAIL_SMTP_PORT, smtpPort);
+        properties.put(MAIL_SMTP_FROM, fromEmail);
         properties.put(MAIL_SMTP_AUTH, "true");
         properties.put(MAIL_SMTP_STARTTLS_ENABLE, "true");
 
@@ -57,7 +60,7 @@ public class MailService {
         Authenticator authenticator = new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(email, password);
+                return new PasswordAuthentication(username, password);
             }
         };
         this.session = Session.getInstance(properties, authenticator);
@@ -65,10 +68,11 @@ public class MailService {
 
     public static void main(String[] args) {
         MailService service = new MailService(2,
-                "...",
-                "...", "smtp.gmail.com", "587", "imap.gmail.com", "993");
+                "llm.developer.project.425@gmail.com", "...",
+                "smtp.gmail.com", "587", "imap.gmail.com", "993",
+                "llm.developer.project.425@gmail.com");
         try {
-            service.processUnreadMessages(null);
+            service.processUnreadMessages(1);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }

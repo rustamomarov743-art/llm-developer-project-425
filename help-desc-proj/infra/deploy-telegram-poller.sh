@@ -5,10 +5,7 @@
 # Использование:
 #   ./deploy-telegram-poller.sh                        # собрать и задеплоить
 #   ./deploy-telegram-poller.sh --no-build rag-embed   # задеплоить ез пересборки архива
-#
-# Память 512 МБ у функций с YDB SDK: JVM с gRPC-стеком в 128 МБ не поднимается.
-# Timeout 60 с: дефолтных 3 с не хватает на холодный старт JVM. У rag-rerank он вдвое
-# больше: судья опрашивается по одному кандидату, и каждый ответ модели — секунды.
+
 set -euo pipefail
 
 YC="${YC:-$HOME/yandex-cloud/bin/yc}"

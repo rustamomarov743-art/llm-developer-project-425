@@ -3,12 +3,9 @@
 # Собирает архив и создаёт новую версию функции telegram-poller.
 #
 # Использование:
-#   ./deploy-telegram-poller.sh                        # собрать и задеплоить
-#   ./deploy-telegram-poller.sh --no-build rag-embed   # задеплоить ез пересборки архива
-#
-# Память 512 МБ у функций с YDB SDK: JVM с gRPC-стеком в 128 МБ не поднимается.
-# Timeout 60 с: дефолтных 3 с не хватает на холодный старт JVM. У rag-rerank он вдвое
-# больше: судья опрашивается по одному кандидату, и каждый ответ модели — секунды.
+#   ./deploy-email-poller.sh                       # собрать и задеплоить
+#   ./deploy-email-poller.sh --no-build rag-embed   # задеплоить ез пересборки архива
+
 set -euo pipefail
 
 YC="${YC:-$HOME/yandex-cloud/bin/yc}"
@@ -56,14 +53,7 @@ fi
     --service-account-id "$SA_ID" \
     --source-path "$ARCHIVE" \
     --format json \
-    --environment YC_FOLDER_ID=b1gpecvq19l0fva2r6mc,\
-                  IMAP_HOST=imap.gmail.com,\
-                  IMAP_PORT=993,\
-                  IMAP_USER=llm.developer.project.425@gmail.com,\
-                  SMTP_HOST=smtp.gmail.com,\
-                  SMTP_PORT=587,\
-                  SMTP_USER=llm.developer.project.425@gmail.com,\
-                  HELPDESK_MAILBOX=llm.developer.project.425@gmail.com \
+    --environment YC_FOLDER_ID="$FOLDER_ID",IMAP_HOST="imap.gmail.com",IMAP_PORT="993",IMAP_USER="llm.developer.project.425@gmail.com",SMTP_HOST="smtp.gmail.com",SMTP_PORT="587",SMTP_USER="llm.developer.project.425@gmail.com",HELPDESK_MAILBOX="llm.developer.project.425@gmail.com" \
     --secret environment-variable=IMAP_PASSWORD,name=email-credentials,key=password \
     --secret environment-variable=SMTP_PASSWORD,name=email-credentials,key=password \
     --secret environment-variable=YDB_ENDPOINT,name=ydb-endpoint,key=YDB_ENDPOINT \

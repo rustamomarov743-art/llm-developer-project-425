@@ -24,6 +24,7 @@ public class EmailPoller implements Function<Object, Object> {
 
     private String doApply() throws Exception {
         String email = PropertySource.get("HELPDESK_MAILBOX");
+        String smtpUser = PropertySource.get("SMTP_USER");
         String smtpHost = PropertySource.get("SMTP_HOST");
         String smtpPort = PropertySource.get("SMTP_PORT");
         String imapHost = PropertySource.get("IMAP_HOST");
@@ -31,7 +32,8 @@ public class EmailPoller implements Function<Object, Object> {
         String password = PropertySource.get("IMAP_PASSWORD");
         int batch = PropertySource.getOrDefault("EMAIL_BATCH", 5, Integer::parseInt);
 
-        MailService mailService = new MailService(batch, password, email, smtpHost, smtpPort, imapHost, imapPort);
+        MailService mailService = new MailService(batch, smtpUser, password, smtpHost, smtpPort, imapHost, imapPort,
+                email);
 
         String processedMessageNum = BotStateSource.get("last_processed_message_num");
         Integer lastMessageNum = Objects.isNull(processedMessageNum) ? null : Integer.valueOf(processedMessageNum);

@@ -45,9 +45,8 @@ public class BotStateSource {
 
     public static void save(String key, String value) {
         Objects.requireNonNull(key, "key must be set");
-        Params params = Params.of("$key", PrimitiveValue.newText(key));
         Value<?> value1 = Objects.isNull(value) ? NullValue.of() : PrimitiveValue.newText(value);
-        params.put("$value", value1);
+        Params params = Params.of("$key", PrimitiveValue.newText(key), "$value", value1);
         Ydb.execute(INSERT_VALUE, params);
     }
 }
