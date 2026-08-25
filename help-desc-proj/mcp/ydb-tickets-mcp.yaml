@@ -1,0 +1,59 @@
+# ID функций подставляет infra/deploy-ydb-tickets-mcp.sh, в репозитории только плейсхолдеры.
+
+- name: create-ticket
+  description: >-
+    Создаёт тикет поддержки: заголовок и описание проблемы. Вызывать ТОЛЬКО по прямой
+    просьбе пользователя завести обращение, и только с тем текстом, который он сам
+    продиктовал.
+  input_json_schema: |
+    {
+      "type": "object",
+      "properties": {
+        "action": {"type": "string", "enum": ["create-ticket" ], "description": "операция"},
+        "user_id": {"type": "string", "description": "email отправителя"},
+        "category": {"type": "string", "enum": ["bug", "docs", "feature", "closed" ], "description": "категория тикета"},
+        "text": {"type": "string", "maxLength": 4000, "description": "описание проблемы словами пользователя"}
+      },
+      "required": ["action", "user_id", "category", "text" ]
+    }
+  action:
+    function_call:
+      function_id: __YDB_TICKETS_ID__
+      tag: $latest
+
+- name: append-message
+  description: >-
+    Добавляет сообщение в существующий тикет поддержки. Идентификатор тикета берётся из
+    ответа create-ticket.
+  input_json_schema: |
+    {
+      "type": "object",
+      "properties": {
+        "action": {"type": "string", "enum": ["append-message" ], "description": "операция"},
+        "ticket_id": {"type": "string", "description": "идентификатор тикета в формате UUID"},
+        "role": {"type": "string", "enum": ["user", "agent" ], "description": "автор сообщения"},
+        "text": {"type": "string", "maxLength": 4000, "description": "текст сообщения"}
+      },
+      "required": ["action", "ticket_id", "role", "text"]
+    }
+  action:
+    function_call:
+      function_id: __YDB_TICKETS_ID__
+      tag: $latest
+
+- name: list-my-tickets
+  description: >-
+    Возвращает тикеты пользователя по user_id.
+  input_json_schema: |
+    {
+      "type": "object",
+      "properties": {
+        "action": {"type": "string", "enum": ["list-my-tickets" ], "description": "операция"},
+        "user_id": {"type": "string", "description": "email отправителя"}
+      },
+      "required": ["action", "user_id"]
+    }
+  action:
+    function_call:
+      function_id: __YDB_TICKETS_ID__
+      tag: $latest
