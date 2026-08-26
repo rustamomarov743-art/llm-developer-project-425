@@ -13,21 +13,37 @@ import java.util.UUID;
 
 public class TicketService {
 
+    /** Статус новой заявки; answered, escalated и closed выставляются позже по ходу переписки. */
+    private static final String NEW_TICKET_STATUS = "open";
+
+    /** Метрики модели есть только у ответов агента, у сообщения пользователя их взять негде. */
+    private static final String NO_MODEL = "";
+    private static final long NO_TOKENS = 0;
+    private static final long NO_LATENCY = 0;
+
     public AppendMessageResponse appendMessage(Event.AppendMessage event, Context context) {
         Objects.requireNonNull(event);
-        return new AppendMessageResponse(UUID.randomUUID().toString(), true);
+        String messageId = UUID.randomUUID().toString();
+
+        TicketRepository.saveMessage(messageId, event.getTicketId(), event.getRole(),
+                event.getText(), NO_MODEL, NO_TOKENS, NO_TOKENS, NO_LATENCY, Instant.now());
+
+        return new AppendMessageResponse(messageId, true);
     }
 
     public CreateTicketResponse createTicket(Event.CreateTicket event, Context context) {
         Objects.requireNonNull(event);
-        return new CreateTicketResponse(UUID.randomUUID().toString(), Instant.now());
+        String ticketId = UUID.randomUUID().toString();
+        Instant createdAt = Instant.now();
+
+        TicketRepository.saveTicket(ticketId, event.getUserId(), event.getCategory(),
+                NEW_TICKET_STATUS, event.getText(), createdAt);
+
+        return new CreateTicketResponse(ticketId, createdAt);
     }
 
-    public List<TicketResponse> createTicket(Event.ListTicket event, Context context) {
+    public List<TicketResponse> findTickets(Event.ListTicket event, Context context) {
         Objects.requireNonNull(event);
-        return List.of(
-                new TicketResponse(UUID.randomUUID().toString(), "open", "bug", "bla-bla-1", Instant.now()),
-                new TicketResponse(UUID.randomUUID().toString(), "answered", "feature", "bla-bla-2", Instant.now())
-        );
+        return TicketRepository.findTickets(event.getUserId());
     }
 }

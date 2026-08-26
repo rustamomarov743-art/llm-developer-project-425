@@ -39,7 +39,7 @@ public class YdbTicketsHandler implements YcFunction<String, String> {
         response = switch (event.getAction()) {
             case Event.CREATE_TICKET -> ticketService.createTicket(((Event.CreateTicket) event), context);
             case Event.APPEND_MESSAGE -> ticketService.appendMessage(((Event.AppendMessage) event), context);
-            case Event.LIST_TICKET -> ticketService.createTicket(((Event.ListTicket) event), context);
+            case Event.LIST_TICKET -> ticketService.findTickets(((Event.ListTicket) event), context);
             default -> throw new IllegalArgumentException("Unknown action: " + event.getAction());
         };
         String responseValue;

@@ -10,7 +10,7 @@ import tech.ydb.table.values.Value;
 
 import java.util.Objects;
 
-public class BotStateSource {
+public final class BotStateSource {
 
     private static final String GET_VALUE = """
             DECLARE $key AS Utf8;
