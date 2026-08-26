@@ -3,24 +3,30 @@ package ru.hexlet.llm.developer425.ticket.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Objects;
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "action")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = Action.CreateTicket.class, name = Action.CREATE_TICKET ),
-        @JsonSubTypes.Type(value = Action.AppendMessage.class, name = Action.APPEND_MESSAGE),
-        @JsonSubTypes.Type(value = Action.ListTicket.class, name = Action.LIST_TICKET)
+        @JsonSubTypes.Type(value = Event.CreateTicket.class, name = Event.CREATE_TICKET),
+        @JsonSubTypes.Type(value = Event.AppendMessage.class, name = Event.APPEND_MESSAGE),
+        @JsonSubTypes.Type(value = Event.ListTicket.class, name = Event.LIST_TICKET)
 })
-public abstract sealed class Action {
-    static final String CREATE_TICKET = "create-ticket";
-    static final String APPEND_MESSAGE = "append-message";
-    static final String LIST_TICKET = "list-my-tickets";
+public abstract sealed class Event {
+    private static final ObjectMapper mapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    public static final String CREATE_TICKET = "create-ticket";
+    public static final String APPEND_MESSAGE = "append-message";
+    public static final String LIST_TICKET = "list-my-tickets";
 
     private final String action;
 
-    private Action(String action) {
+    private Event(String action) {
         this.action = action;
     }
 
@@ -30,7 +36,19 @@ public abstract sealed class Action {
 
     public abstract void validate() throws Exception;
 
-    public static final class CreateTicket extends Action {
+    public static Event deserialize(String json) throws Exception {
+        Objects.requireNonNull(json, "json is null");
+        Event obj;
+        try {
+            obj = mapper.readValue(json, Event.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Failed to deserialize from json", e);
+        }
+        obj.validate();
+        return obj;
+    }
+
+    public static final class CreateTicket extends Event {
 
         @JsonProperty("user_id")
         private String userId;
@@ -41,7 +59,7 @@ public abstract sealed class Action {
         @JsonProperty("text")
         private String text;
 
-        public CreateTicket() {
+        CreateTicket() {
             super(CREATE_TICKET);
         }
 
@@ -49,24 +67,12 @@ public abstract sealed class Action {
             return userId;
         }
 
-        public void setUserId(String userId) {
-            this.userId = userId;
-        }
-
         public String getCategory() {
             return category;
         }
 
-        public void setCategory(String category) {
-            this.category = category;
-        }
-
         public String getText() {
             return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
         }
 
         @Override
@@ -88,7 +94,7 @@ public abstract sealed class Action {
         }
     }
 
-    public static final class AppendMessage extends Action {
+    public static final class AppendMessage extends Event {
 
         @JsonProperty("ticket_id")
         private String ticketId;
@@ -107,24 +113,12 @@ public abstract sealed class Action {
             return ticketId;
         }
 
-        public void setTicketId(String ticketId) {
-            this.ticketId = ticketId;
-        }
-
         public String getRole() {
             return role;
         }
 
-        public void setRole(String role) {
-            this.role = role;
-        }
-
         public String getText() {
             return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
         }
 
         @Override
@@ -146,7 +140,7 @@ public abstract sealed class Action {
         }
     }
 
-    public static final class ListTicket extends Action {
+    public static final class ListTicket extends Event {
 
         @JsonProperty("user_id")
         private String userId;
@@ -157,10 +151,6 @@ public abstract sealed class Action {
 
         public String getUserId() {
             return userId;
-        }
-
-        public void setUserId(String userId) {
-            this.userId = userId;
         }
 
         @Override

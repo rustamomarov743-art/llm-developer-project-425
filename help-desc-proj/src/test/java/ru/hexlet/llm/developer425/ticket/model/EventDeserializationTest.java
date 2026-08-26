@@ -1,18 +1,15 @@
 package ru.hexlet.llm.developer425.ticket.model;
 
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-
 /**
- * Проверяет, что Jackson по полю {@code action} выбирает нужного наследника {@link Action}.
+ * Проверяет, что Jackson по полю {@code event} выбирает нужного наследника {@link Event}.
  * JSON в тестах повторяет то, что MCP-шлюз кладёт в тело запроса к функции ydb-tickets.
  */
-class ActionDeserializationTest {
-
-    private final ObjectMapper mapper = new ObjectMapper();
+class EventDeserializationTest {
 
     @Test
     void deserializesCreateTicket() throws Exception {
@@ -25,9 +22,9 @@ class ActionDeserializationTest {
                 }
                 """;
 
-        Action action = mapper.readValue(json, Action.class);
+        Event event = Event.deserialize(json);
 
-        Action.CreateTicket ticket = assertInstanceOf(Action.CreateTicket.class, action);
+        Event.CreateTicket ticket = assertInstanceOf(Event.CreateTicket.class, event);
         assertEquals("create-ticket", ticket.getAction());
         assertEquals("ru743@gmail.com", ticket.getUserId());
         assertEquals("bug", ticket.getCategory());
@@ -45,9 +42,9 @@ class ActionDeserializationTest {
                 }
                 """;
 
-        Action action = mapper.readValue(json, Action.class);
+        Event event = Event.deserialize(json);
 
-        Action.AppendMessage message = assertInstanceOf(Action.AppendMessage.class, action);
+        Event.AppendMessage message = assertInstanceOf(Event.AppendMessage.class, event);
         assertEquals("append-message", message.getAction());
         assertEquals("0d1c8f4e-6b2a-4d55-9c31-7f0e2a5b8d10", message.getTicketId());
         assertEquals("user", message.getRole());
@@ -63,9 +60,9 @@ class ActionDeserializationTest {
                 }
                 """;
 
-        Action action = mapper.readValue(json, Action.class);
+        Event event = Event.deserialize(json);
 
-        Action.ListTicket list = assertInstanceOf(Action.ListTicket.class, action);
+        Event.ListTicket list = assertInstanceOf(Event.ListTicket.class, event);
         assertEquals("list-my-tickets", list.getAction());
         assertEquals("ru743@gmail.com", list.getUserId());
     }
