@@ -4,7 +4,7 @@
 #
 # Использование:
 #   ./deploy-ydb-tickets.sh                      # собрать и задеплоить
-#   ./deploy-ydb-tickets.sh --no-build rag-embed   # задеплоить ез пересборки архива
+#   ./deploy-ydb-tickets.sh --no-build           # задеплоить ез пересборки архива
 
 set -euo pipefail
 

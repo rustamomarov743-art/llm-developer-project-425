@@ -1,18 +1,16 @@
 package ru.hexlet.llm.developer425.ticket.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import org.junit.jupiter.api.Test;
+import ru.hexlet.llm.developer425.core.Json;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static ru.hexlet.llm.developer425.ticket.YdbTicketsHandler.MAPPER;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Проверяет контракт сериализации ответов функции ydb-tickets: имена ключей в snake_case,
@@ -28,6 +26,7 @@ class ResponseSerializationTest {
 
     /** То же время в том виде, в каком оно попадает в JSON. */
     private static final String CREATED_AT_JSON = "2026-08-26T10:15:30Z";
+    private static final ObjectMapper MAPPER = Json.mapper();
 
     @Test
     void ticketResponseKeepsSnakeCaseKeys() throws Exception {

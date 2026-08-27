@@ -11,7 +11,7 @@
       "properties": {
         "action": {"type": "string", "enum": ["create-ticket" ], "description": "операция"},
         "user_id": {"type": "string", "description": "email отправителя"},
-        "category": {"type": "string", "enum": ["bug", "docs", "feature", "closed" ], "description": "категория тикета"},
+        "category": {"type": "string", "enum": ["bug", "docs", "feature", "access" ], "description": "категория тикета"},
         "text": {"type": "string", "maxLength": 4000, "description": "описание проблемы словами пользователя"}
       },
       "required": ["action", "user_id", "category", "text" ]

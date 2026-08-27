@@ -1,28 +1,34 @@
 package ru.hexlet.llm.developer425.mail;
 
+import jakarta.mail.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.hexlet.llm.developer425.agent.AgentService;
 import ru.hexlet.llm.developer425.core.BotStateSource;
+import ru.hexlet.llm.developer425.core.Iam;
 import ru.hexlet.llm.developer425.core.PropertySource;
+import yandex.cloud.sdk.functions.Context;
+import yandex.cloud.sdk.functions.YcFunction;
 
 import java.util.Objects;
-import java.util.function.Function;
 
-public class EmailPoller implements Function<Object, Object> {
+public class EmailPoller implements YcFunction<Object, Object> {
     private static final Logger LOG = LoggerFactory.getLogger(EmailPoller.class);
 
     @Override
-    public Object apply(Object o) {
+    public Object handle(Object o, Context context) {
         LOG.info("EmailPoller invoked");
         try {
-            return doApply();
+            return doApply(context);
         } catch (Exception e) {
             LOG.error("Failed to call function", e);
             return "ERROR";
         }
     }
 
-    private String doApply() throws Exception {
+    private String doApply(Context context) throws Exception {
+        String token = Iam.token(context);
+
         String email = PropertySource.get("HELPDESK_MAILBOX");
         String smtpUser = PropertySource.get("SMTP_USER");
         String smtpHost = PropertySource.get("SMTP_HOST");
@@ -31,9 +37,13 @@ public class EmailPoller implements Function<Object, Object> {
         String imapPort = PropertySource.get("IMAP_PORT");
         String password = PropertySource.get("IMAP_PASSWORD");
         int batch = PropertySource.getOrDefault("EMAIL_BATCH", 5, Integer::parseInt);
+        String folderId = PropertySource.get("YC_FOLDER_ID");
+        String agentId = PropertySource.get("YC_AGENT_ID");
+        String mcpServerUrl = PropertySource.get("YC_YDB_TICKETS_MCP_SERVER_URL");
 
-        MailService mailService = new MailService(batch, smtpUser, password, smtpHost, smtpPort, imapHost, imapPort,
-                email);
+        AgentService agent = new AgentService(() -> token, folderId, agentId, mcpServerUrl);
+        Session session = MailSessionBuilder.build(smtpUser, password, smtpHost, smtpPort, imapHost, imapPort, email);
+        MailProcessingService mailService = new MailProcessingService(batch, session, agent);
 
         String processedMessageNum = BotStateSource.get("last_processed_message_num");
         Integer lastMessageNum = Objects.isNull(processedMessageNum) ? null : Integer.valueOf(processedMessageNum);

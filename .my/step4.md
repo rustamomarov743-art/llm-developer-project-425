@@ -26,7 +26,7 @@
 Egress IMAP/SMTP из YC Cloud Functions работает — сырые TLS-сокеты (993/465) не блокируются. Это отличается от известного ограничения YC CF: исходящий POST к api.telegram.org режется. SMTP — это не HTTP, и блокировки для него нет.
 Ссылки
 
-    Yandex 360: создание app-password для почтовых программ — для авторизации по IMAP/SMTP
+    Яндекс ID: пароли приложений — для авторизации по IMAP/SMTP
     Миграция с Assistant API на Responses API — документация Yandex AI Studio
     Таймер, который вызывает Cloud Function — инструкция от Яндекс
     imaplib — IMAP4 protocol client / smtplib — SMTP protocol client — стандартная библиотека Python (для других языков возьмите их IMAP/SMTP-эквиваленты)

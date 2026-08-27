@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ru.hexlet.llm.developer425.core.Json;
 
 import java.util.Objects;
 
@@ -17,8 +17,7 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = Event.ListTicket.class, name = Event.LIST_TICKET)
 })
 public abstract sealed class Event {
-    private static final ObjectMapper mapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final ObjectMapper mapper = Json.mapper();
 
     public static final String CREATE_TICKET = "create-ticket";
     public static final String APPEND_MESSAGE = "append-message";
@@ -105,7 +104,7 @@ public abstract sealed class Event {
         @JsonProperty("text")
         private String text;
 
-        public AppendMessage() {
+        AppendMessage() {
             super(APPEND_MESSAGE);
         }
 
@@ -145,7 +144,7 @@ public abstract sealed class Event {
         @JsonProperty("user_id")
         private String userId;
 
-        public ListTicket() {
+        ListTicket() {
             super(LIST_TICKET);
         }
 
