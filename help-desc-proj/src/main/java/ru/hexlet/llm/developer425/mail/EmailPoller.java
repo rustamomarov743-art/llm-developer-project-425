@@ -12,16 +12,16 @@ import yandex.cloud.sdk.functions.YcFunction;
 
 import java.util.Objects;
 
-public class EmailPoller implements YcFunction<Object, Object> {
+public class EmailPoller implements YcFunction<String, String> {
     private static final Logger LOG = LoggerFactory.getLogger(EmailPoller.class);
 
     @Override
-    public Object handle(Object o, Context context) {
+    public String handle(String o, Context context) {
         LOG.info("EmailPoller invoked");
         try {
             return doApply(context);
         } catch (Exception e) {
-            LOG.error("Failed to call function", e);
+            LOG.error("Failed to call function with message: %s".formatted(e.getMessage()), e);
             return "ERROR";
         }
     }

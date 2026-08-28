@@ -28,6 +28,7 @@
         serverless.mcpGateways.invoker \
         lockbox.payloadViewer \
         ai.languageModels.user \
+        ai.assistants.editor \
         ydb.editor; do
       yc resource-manager folder add-access-binding \
         --id "$FOLDER_ID" \
