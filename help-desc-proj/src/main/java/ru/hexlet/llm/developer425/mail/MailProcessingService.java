@@ -4,7 +4,9 @@ import jakarta.mail.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.hexlet.llm.developer425.agent.AgentService;
+import ru.hexlet.llm.developer425.agent.model.AgentResponse;
 import ru.hexlet.llm.developer425.agent.model.UserMessage;
+import ru.hexlet.llm.developer425.ticket.TicketService;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -18,9 +20,11 @@ public class MailProcessingService {
     private final int batch;
     private final Session session;
     private final AgentService agentService;
+    private final TicketService ticketService;
 
-    public MailProcessingService(int batch, Session session, AgentService agentService) {
+    public MailProcessingService(int batch, Session session, AgentService agentService, TicketService ticketService) {
         this.agentService = agentService;
+        this.ticketService = ticketService;
         if (batch < 1) {
             throw new IllegalArgumentException("Batch must be grater then 1");
         }
@@ -63,7 +67,12 @@ public class MailProcessingService {
         for (Message message : folder.getMessages(start, end)) {
             if (!message.isSet(Flags.Flag.SEEN)) {
                 LOG.info("GOT_UNSEEN=1");
-                process(message, transport);
+                try {
+                    process(message, transport);
+                } catch (MessagingException e) {
+                    LOG.error("Failed to process message num: %s".formatted(message.getMessageNumber()), e);
+                    throw new RuntimeException(e);
+                }
                 message.setFlag(Flags.Flag.SEEN, true);
             }
             lastProcessed = message.getMessageNumber();
@@ -84,8 +93,19 @@ public class MailProcessingService {
             LOG.warn("MSG num={} missing from body", message.getMessageNumber());
             return;
         }
-        agentService.sendMessage(new UserMessage(optionalAddress.get().toString(), firstText.get()));
-        sendReply(message, "empty", transport);
+        String userMessage = firstText.get();
+        AgentResponse response = agentService
+                .sendMessage(new UserMessage(optionalAddress.get().toString(), userMessage));
+        if (Objects.isNull(response.text())) {
+            LOG.warn("MSG num={} missing response from agent", message.getMessageNumber());
+            return;
+        }
+        sendReply(message, response.text(), transport);
+        if (Objects.nonNull(response.createdTicketId())) {
+            ticketService.appendMessage(response.createdTicketId(), "user", userMessage, "", 0, 0, 0);
+            ticketService.appendMessage(response.createdTicketId(), "agent", response.text(), response.model(),
+                    response.inputTokens(), response.outputTokens(), response.latencyMs());
+        }
     }
 
     private void sendReply(Message original, String text, Transport transport) throws MessagingException {

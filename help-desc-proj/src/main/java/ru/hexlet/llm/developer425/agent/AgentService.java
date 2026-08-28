@@ -1,21 +1,22 @@
 package ru.hexlet.llm.developer425.agent;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.core.JsonValue;
 import com.openai.credential.BearerTokenCredential;
-import com.openai.models.responses.ResponseCreateParams;
-import com.openai.models.responses.ResponsePrompt;
-import com.openai.models.responses.Tool;
+import com.openai.models.responses.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.hexlet.llm.developer425.agent.model.DiscussionLog;
+import ru.hexlet.llm.developer425.agent.model.AgentResponse;
 import ru.hexlet.llm.developer425.agent.model.UserMessage;
 import ru.hexlet.llm.developer425.core.Json;
+import ru.hexlet.llm.developer425.ticket.model.CreateTicketResponse;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class AgentService {
@@ -27,14 +28,15 @@ public class AgentService {
     private final ResponsePrompt.Builder promptBuilder;
     private final String mcpServerUrl;
 
-
     public static void main(String[] args) {
         var agentService =
                 new AgentService(() -> "change_me",
                         "b1gpecvq19l0fva2r6mc", "fvtdutb2q552omlr99sq",
                         "https://db8asqgevmh9ih0tb4m2.99igvxy3.mcpgw.serverless.yandexcloud.net");
 
-        agentService.sendMessage(new UserMessage("my@example.ru", "создай тикет. У меня ничего не работает принтер"));
+        var response = agentService
+                .sendMessage(new UserMessage("my@example.ru", "создай тикет. У меня ничего не работает принтер"));
+        LOG.info(response.toString());
     }
 
     public AgentService(Supplier<String> tokenSupplier,
@@ -55,7 +57,7 @@ public class AgentService {
         this.mcpServerUrl = mcpServerUrl;
     }
 
-    public DiscussionLog sendMessage(UserMessage message) {
+    public AgentResponse sendMessage(UserMessage message) {
         Objects.requireNonNull(message, "message must not be null");
 
         ResponsePrompt.Variables variables = ResponsePrompt.Variables.builder()
@@ -78,11 +80,56 @@ public class AgentService {
                                 .build())
                         .build())))
                 .build();
-
+        long begin = System.currentTimeMillis();
         var response = client.responses().create(params);
+        long end = System.currentTimeMillis();
 
-        LOG.info("Answer from agent: {}", Json.write(response));
-        return null;
+        return parseResponse(response, end - begin);
+    }
+
+    private AgentResponse parseResponse(Response response, long latencyMs) {
+        String model = response.model().string().orElse("");
+        Long inputTokens = null;
+        Long outputTokens = null;
+        var usage = response.usage()
+                .orElse(null);
+        if (Objects.nonNull(usage)) {
+            inputTokens = usage.inputTokens();
+            outputTokens = usage.outputTokens();
+        }
+        String createdTicketId = response.output()
+                .stream()
+                .map(item -> item.mcpCall().orElse(null))
+                .filter(Objects::nonNull)
+                .filter(mcpCall -> "create-ticket".equalsIgnoreCase(mcpCall.name()))
+                .flatMap(mcpCall -> mcpCall.output().stream())
+                .map(this::parseTicketId)
+                .flatMap(Optional::stream)
+                .findAny()
+                .orElse(null);
+
+        String text = response.output()
+                .stream()
+                .map(item -> item.message().orElse(null))
+                .filter(Objects::nonNull)
+                .filter(message -> ResponseOutputMessage.Status.COMPLETED.equals(message.status()))
+                .flatMap(message -> message.content().stream())
+                .flatMap(content -> content.outputText().stream())
+                .map(ResponseOutputText::text)
+                .findAny()
+                .orElse(null);
+
+        return new AgentResponse(model, createdTicketId, text, inputTokens, outputTokens, latencyMs);
+    }
+
+    private Optional<String> parseTicketId(String json) {
+        try {
+            return Optional.ofNullable(Json.mapper().readValue(json, CreateTicketResponse.class).ticketId());
+        } catch (JsonProcessingException e) {
+            LOG.error("Error parsing ticket id from json", e);
+            return Optional.empty();
+        }
+
     }
 }
 

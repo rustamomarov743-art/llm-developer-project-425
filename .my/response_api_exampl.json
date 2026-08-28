@@ -1,6 +1,6 @@
 {
-  "id": "69760147-46d8-4b96-b558-ff1418bebbbc",
-  "created_at": 1787914888.0,
+  "id": "362fbaae-ac62-4a4c-bce6-d96561b7d9c9",
+  "created_at": 1.787925039E9,
   "error": null,
   "incomplete_details": null,
   "instructions": "Ты — ассистент поддержки. Ты общаешься с пользователем системы и помогаешь решить его вопросы. Для получения информации используй инструмент поиска по документации. Отвечай строго на основе предоставленной базы знаний. Если в базе знаний нет информации для ответа, прямо скажи пользователю: «К сожалению, в базе знаний нет ответа на этот вопрос. Я могу передать запрос специалисту». Отвечай кратко, понятно и по делу. Если вопрос не относится к поддержке, вежливо откажись отвечать.\n\nТекущий пользователь  user_id = my@example.ru",
@@ -9,7 +9,7 @@
   "object": "response",
   "output": [
     {
-      "id": "87745afe-ee1d-489c-8b7a-bd631f37b999",
+      "id": "9b0c1fca-4c77-4141-9759-6c0127ecea42",
       "server_label": "ydb-tickets-mcp",
       "tools": [
         {
@@ -100,11 +100,24 @@
       "valid": true
     },
     {
-      "id": "ca7bd7f2-0dee-48cd-b768-ef70427a83f1",
+      "id": "9bcad789-d8cb-43e9-b6cc-993506fdbf9e",
+      "arguments": "{\"action\":\"create-ticket\",\"category\":\"bug\",\"text\":\"У меня ничего не работает принтер\",\"user_id\":\"my@example.ru\"}",
+      "name": "create-ticket",
+      "server_label": "ydb-tickets-mcp",
+      "type": "mcp_call",
+      "approval_request_id": null,
+      "error": null,
+      "output": "{\"ticket_id\":\"3b039611-60e4-49a3-822f-65278c4627c2\",\"created_at\":\"2026-08-28T13:50:44.659411735Z\"}",
+      "status": null,
+      "valid": true,
+      "valid": true
+    },
+    {
+      "id": "b808dc8a-d5d0-46a8-b47b-cda727995502",
       "content": [
         {
           "annotations": [],
-          "text": "Уточните, пожалуйста, ваш вопрос или проблему, чтобы я мог помочь вам более эффективно.",
+          "text": "Тикет успешно создан. Идентификатор тикета: 3b039611-60e4-49a3-822f-65278c4627c2. Ожидайте ответа от специалиста.",
           "type": "output_text",
           "logprobs": null,
           "valid": true,
@@ -172,20 +185,19 @@
   "top_logprobs": null,
   "truncation": "disabled",
   "usage": {
-    "input_tokens": 384,
+    "input_tokens": 393,
     "input_tokens_details": {
-      "cached_tokens": 352,
-      "valid": false,
-      "tool_tokens": 0,
+      "cached_tokens": 0,
+      "tool_tokens": 536,
       "valid": true
     },
-    "output_tokens": 17,
+    "output_tokens": 99,
     "output_tokens_details": {
       "reasoning_tokens": 0,
       "valid": true,
       "valid": true
     },
-    "total_tokens": 401,
+    "total_tokens": 1028,
     "valid": false,
     "valid": true
   },

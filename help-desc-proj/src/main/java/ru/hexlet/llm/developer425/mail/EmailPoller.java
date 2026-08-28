@@ -7,6 +7,7 @@ import ru.hexlet.llm.developer425.agent.AgentService;
 import ru.hexlet.llm.developer425.core.BotStateSource;
 import ru.hexlet.llm.developer425.core.Iam;
 import ru.hexlet.llm.developer425.core.PropertySource;
+import ru.hexlet.llm.developer425.ticket.TicketService;
 import yandex.cloud.sdk.functions.Context;
 import yandex.cloud.sdk.functions.YcFunction;
 
@@ -43,7 +44,8 @@ public class EmailPoller implements YcFunction<String, String> {
 
         AgentService agent = new AgentService(() -> token, folderId, agentId, mcpServerUrl);
         Session session = MailSessionBuilder.build(smtpUser, password, smtpHost, smtpPort, imapHost, imapPort, email);
-        MailProcessingService mailService = new MailProcessingService(batch, session, agent);
+        TicketService ticketService = new TicketService();
+        MailProcessingService mailService = new MailProcessingService(batch, session, agent, ticketService);
 
         String processedMessageNum = BotStateSource.get("last_processed_message_num");
         Integer lastMessageNum = Objects.isNull(processedMessageNum) ? null : Integer.valueOf(processedMessageNum);
