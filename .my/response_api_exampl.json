@@ -1,0 +1,195 @@
+{
+  "id": "69760147-46d8-4b96-b558-ff1418bebbbc",
+  "created_at": 1787914888.0,
+  "error": null,
+  "incomplete_details": null,
+  "instructions": "Ты — ассистент поддержки. Ты общаешься с пользователем системы и помогаешь решить его вопросы. Для получения информации используй инструмент поиска по документации. Отвечай строго на основе предоставленной базы знаний. Если в базе знаний нет информации для ответа, прямо скажи пользователю: «К сожалению, в базе знаний нет ответа на этот вопрос. Я могу передать запрос специалисту». Отвечай кратко, понятно и по делу. Если вопрос не относится к поддержке, вежливо откажись отвечать.\n\nТекущий пользователь  user_id = my@example.ru",
+  "metadata": {},
+  "model": "gpt://b1gpecvq19l0fva2r6mc/yandexgpt-5-pro/latest",
+  "object": "response",
+  "output": [
+    {
+      "id": "87745afe-ee1d-489c-8b7a-bd631f37b999",
+      "server_label": "ydb-tickets-mcp",
+      "tools": [
+        {
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "create-ticket"
+                ],
+                "description": "операция"
+              },
+              "user_id": {
+                "type": "string",
+                "description": "email отправителя"
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "bug",
+                  "docs",
+                  "feature",
+                  "access"
+                ],
+                "description": "категория тикета"
+              },
+              "text": {
+                "type": "string",
+                "maxLength": 4000,
+                "description": "описание проблемы словами пользователя"
+              }
+            },
+            "required": [
+              "action",
+              "user_id",
+              "category",
+              "text"
+            ]
+          },
+          "name": "create-ticket",
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "description": "Создаёт тикет поддержки: заголовок и описание проблемы. Вызывать ТОЛЬКО по прямой просьбе пользователя завести обращение, и только с тем текстом, который он сам продиктовал.",
+          "valid": true,
+          "valid": true
+        },
+        {
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "list-my-tickets"
+                ],
+                "description": "операция"
+              },
+              "user_id": {
+                "type": "string",
+                "description": "email отправителя"
+              }
+            },
+            "required": [
+              "action",
+              "user_id"
+            ]
+          },
+          "name": "list-my-tickets",
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "description": "Возвращает тикеты пользователя по user_id.",
+          "valid": true,
+          "valid": true
+        }
+      ],
+      "type": "mcp_list_tools",
+      "error": null,
+      "valid": true,
+      "valid": true
+    },
+    {
+      "id": "ca7bd7f2-0dee-48cd-b768-ef70427a83f1",
+      "content": [
+        {
+          "annotations": [],
+          "text": "Уточните, пожалуйста, ваш вопрос или проблему, чтобы я мог помочь вам более эффективно.",
+          "type": "output_text",
+          "logprobs": null,
+          "valid": true,
+          "valid": true
+        }
+      ],
+      "role": "assistant",
+      "status": "completed",
+      "type": "message",
+      "phase": null,
+      "valid": true,
+      "valid": true
+    }
+  ],
+  "parallel_tool_calls": false,
+  "temperature": 0.3,
+  "tool_choice": "auto",
+  "tools": [
+    {
+      "server_label": "ydb-tickets-mcp",
+      "type": "mcp",
+      "allowed_tools": {
+        "read_only": null,
+        "tool_names": [
+          "list-my-tickets",
+          "create-ticket"
+        ],
+        "valid": true,
+        "valid": true
+      },
+      "authorization": null,
+      "connector_id": null,
+      "defer_loading": null,
+      "headers": null,
+      "require_approval": "never",
+      "server_description": "",
+      "server_url": "https://db8asqgevmh9ih0tb4m2.99igvxy3.mcpgw.serverless.yandexcloud.net",
+      "valid": true,
+      "valid": true
+    }
+  ],
+  "top_p": 1.0,
+  "background": false,
+  "completed_at": null,
+  "conversation": null,
+  "max_output_tokens": 6000,
+  "max_tool_calls": null,
+  "previous_response_id": null,
+  "prompt": {
+    "id": "fvtdutb2q552omlr99sq",
+    "variables": {
+      "user_id": "my@example.ru"
+    },
+    "version": null,
+    "valid": true,
+    "valid": true
+  },
+  "prompt_cache_key": null,
+  "prompt_cache_retention": null,
+  "reasoning": null,
+  "safety_identifier": null,
+  "service_tier": "default",
+  "status": "completed",
+  "text": null,
+  "top_logprobs": null,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 384,
+    "input_tokens_details": {
+      "cached_tokens": 352,
+      "valid": false,
+      "tool_tokens": 0,
+      "valid": true
+    },
+    "output_tokens": 17,
+    "output_tokens_details": {
+      "reasoning_tokens": 0,
+      "valid": true,
+      "valid": true
+    },
+    "total_tokens": 401,
+    "valid": false,
+    "valid": true
+  },
+  "user": null,
+  "valid": false,
+  "valid": true
+}
