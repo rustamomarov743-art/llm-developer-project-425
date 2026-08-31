@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class MailProcessingService {
 
@@ -93,22 +94,23 @@ public class MailProcessingService {
             LOG.warn("MSG num={} missing from body", message.getMessageNumber());
             return;
         }
-        String userMessage = firstText.get();
+        UserMessage userMessage = new UserMessage(optionalAddress.get().toString(), firstText.get());
         AgentResponse response = agentService
-                .sendMessage(new UserMessage(optionalAddress.get().toString(), userMessage));
+                .sendMessage(userMessage);
         if (Objects.isNull(response.text())) {
             LOG.warn("MSG num={} missing response from agent", message.getMessageNumber());
             return;
         }
-        sendReply(message, response.text(), transport);
+        sendReply(message, response, userMessage, transport);
         if (Objects.nonNull(response.createdTicketId())) {
-            ticketService.appendMessage(response.createdTicketId(), "user", userMessage, "", 0, 0, 0);
+            ticketService.appendMessage(response.createdTicketId(), "user", userMessage.text(), "", 0, 0, 0);
             ticketService.appendMessage(response.createdTicketId(), "agent", response.text(), response.model(),
                     response.inputTokens(), response.outputTokens(), response.latencyMs());
         }
     }
 
-    private void sendReply(Message original, String text, Transport transport) throws MessagingException {
+    private void sendReply(Message original, AgentResponse response, UserMessage userMessage, Transport transport)
+            throws MessagingException {
         Message reply = original.reply(false);
 
         String subject = original.getSubject();
@@ -122,7 +124,16 @@ public class MailProcessingService {
         }
 
         reply.setSubject(subject);
-        reply.setText(text);
+        String quote = Optional.ofNullable(userMessage.text())
+                .stream()
+                .flatMap(text -> Arrays.stream(text.split("\\R", -1)))
+                .map(line -> "> " + line)
+                .collect(Collectors.joining("\n"));
+        String replyText = response.text()
+                           + "\n\n"
+                           + "----- Original message -----\n"
+                           + quote;
+        reply.setText(replyText);
 
         if (!transport.isConnected()) {
             transport.connect();
