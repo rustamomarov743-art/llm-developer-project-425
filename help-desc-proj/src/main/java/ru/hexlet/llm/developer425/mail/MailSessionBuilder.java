@@ -52,4 +52,29 @@ public final class MailSessionBuilder {
         };
         return Session.getInstance(properties, authenticator);
     }
+
+    public static Session build(String username, String password,
+                                String smtpHost, String smtpPort, String fromEmail) {
+        Objects.requireNonNull(password, "password must be set");
+        Objects.requireNonNull(username, "username must be set");
+        Objects.requireNonNull(smtpHost, "smtpHost must be set");
+        Objects.requireNonNull(smtpPort, "smtpPort must be set");
+        Objects.requireNonNull(fromEmail, "fromEmail must be set");
+        Properties properties = new Properties();
+
+        properties.put(MAIL_TRANSPORT_PROTOCOL, "smtp");
+        properties.put(MAIL_SMTP_HOST, smtpHost);
+        properties.put(MAIL_SMTP_PORT, smtpPort);
+        properties.put(MAIL_SMTP_FROM, fromEmail);
+        properties.put(MAIL_SMTP_AUTH, "true");
+        properties.put(MAIL_SMTP_STARTTLS_ENABLE, "true");
+
+        Authenticator authenticator = new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, password);
+            }
+        };
+        return Session.getInstance(properties, authenticator);
+    }
 }

@@ -1,0 +1,78 @@
+yawl: '0.2'
+defaultRetryPolicy:
+  errorList:
+    - STEP_TIMEOUT
+    - HTTP_CALL_503
+  errorListMode: INCLUDE
+  retryCount: 2
+  initialDelay: 2s
+  backoffRate: 2.0
+  maxDelay: 30s
+start: search-opened
+steps:
+  search-opened:
+    databaseQuery:
+      connection:
+        type: YDB
+        host: ydb.serverless.yandexcloud.net
+        port: 2135
+        database: __DATABASE__
+        ssl: true
+        iam: true
+      query: |-
+        SELECT category, text
+        FROM tickets
+        WHERE status = 'open'
+        AND created_at < CurrentUtcDate() - Interval("P1D")
+        LIMIT 100;
+      mode: QUERY
+      output: '{{ {"search-opened": .} }}'
+      next: switch
+    description: ''
+  switch:
+    switch:
+      choices:
+        - condition: (."search-opened".ResultSets[0] | length) == 0
+          next: finish
+        - condition: (."search-opened".ResultSets[0] | length) > 0
+          next: aiStudioAgent
+  aiStudioAgent:
+    aiStudioAgent:
+      promptTemplateId: __AGENT_ID__
+      message: >-
+        Составь дайджест по открытым тикетам за последние сутки:
+        {{."search-opened".ResultSets}}
+      output: '{{ {"ai-studio-agent": .} }}'
+      next: mark-escalated
+    description: ''
+  mark-escalated:
+    databaseQuery:
+      connection:
+        type: YDB
+        host: ydb.serverless.yandexcloud.net
+        port: 2135
+        database: __DATABASE__
+        ssl: true
+        iam: true
+      query: |-
+        UPDATE tickets
+        SET status = 'escalated'
+        WHERE status = 'open'
+        AND created_at < CurrentUtcDate() - Interval("P1D")
+      mode: QUERY
+      next: email-sender
+      catch: []
+    description: ''
+  email-sender:
+    functionCall:
+      functionId: __EMAIL_SENDER_ID__
+      tag: $latest
+      input: |-
+        {{ {
+          "subject": "Дайджест по открытым тикетам за последние сутки",
+          "body": ."ai-studio-agent".Result
+        } }}
+      next: finish
+    description: ''
+  finish:
+    success: {}

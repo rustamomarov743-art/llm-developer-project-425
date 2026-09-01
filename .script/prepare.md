@@ -42,6 +42,9 @@ yc iam service-account create --name ai-studio-sa
     serverless.mcpGateways.invoker 
     lockbox.payloadViewer 
     ai.languageModels.user 
+    ai.assistants.editor
+    serverless.workflows.executor
+    serverless.workflows.viewer
     ydb.editor
 ```bash
 SA_ID=$(yc iam service-account get --name ai-studio-sa --format json | jq -r .id)
@@ -51,6 +54,9 @@ for ROLE in \
     serverless.mcpGateways.invoker \
     lockbox.payloadViewer \
     ai.languageModels.user \
+    ai.assistants.editor \
+    serverless.workflows.executor \
+    serverless.workflows.viewer \
     ydb.editor; do
   yc resource-manager folder add-access-binding \
     --id "$FOLDER_ID" \
