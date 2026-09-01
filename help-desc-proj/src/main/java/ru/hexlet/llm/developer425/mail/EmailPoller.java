@@ -41,8 +41,9 @@ public class EmailPoller implements YcFunction<String, String> {
         String folderId = PropertySource.get("YC_FOLDER_ID");
         String agentId = PropertySource.get("YC_AGENT_ID");
         String mcpServerUrl = PropertySource.get("YC_YDB_TICKETS_MCP_SERVER_URL");
+        String vectorStoreId = PropertySource.get("YC_VECTOR_STORE_ID");
 
-        AgentService agent = new AgentService(() -> token, folderId, agentId, mcpServerUrl);
+        AgentService agent = new AgentService(() -> token, folderId, agentId, mcpServerUrl, vectorStoreId);
         Session session = MailSessionBuilder.build(smtpUser, password, smtpHost, smtpPort, imapHost, imapPort, email);
         TicketService ticketService = new TicketService();
         MailProcessingService mailService = new MailProcessingService(batch, session, agent, ticketService);

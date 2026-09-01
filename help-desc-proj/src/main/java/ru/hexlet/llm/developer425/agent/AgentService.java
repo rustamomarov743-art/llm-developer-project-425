@@ -27,12 +27,14 @@ public class AgentService {
     private final ResponseCreateParams.Builder paramBuilder;
     private final ResponsePrompt.Builder promptBuilder;
     private final String mcpServerUrl;
+    private final String vectorStoreId;
 
     public static void main(String[] args) {
         var agentService =
                 new AgentService(() -> "change_me",
                         "b1gpecvq19l0fva2r6mc", "fvtdutb2q552omlr99sq",
-                        "https://db8asqgevmh9ih0tb4m2.99igvxy3.mcpgw.serverless.yandexcloud.net");
+                        "https://db8asqgevmh9ih0tb4m2.99igvxy3.mcpgw.serverless.yandexcloud.net",
+                        "vectorStoreId");
 
         var response = agentService
                 .sendMessage(new UserMessage("my@example.ru", "создай тикет. У меня ничего не работает принтер"));
@@ -42,7 +44,9 @@ public class AgentService {
     public AgentService(Supplier<String> tokenSupplier,
                         String folderId,
                         String agentId,
-                        String mcpServerUrl) {
+                        String mcpServerUrl,
+                        String vectorStoreId) {
+        this.vectorStoreId = vectorStoreId;
         Objects.requireNonNull(tokenSupplier, "tokenSupplier must not be null");
         Objects.requireNonNull(folderId, "folderId must not be null");
         Objects.requireNonNull(agentId, "agentId must not be null");
@@ -78,7 +82,11 @@ public class AgentService {
                                 .toolNames(List.of("create-ticket", "list-my-tickets"))
                                 .readOnly(false)
                                 .build())
-                        .build())))
+                                .build()),
+                        Tool.ofFileSearch(FileSearchTool.builder()
+                                .addVectorStoreId(vectorStoreId)
+                                .maxNumResults(5)
+                                .build())))
                 .build();
         long begin = System.currentTimeMillis();
         var response = client.responses().create(params);
