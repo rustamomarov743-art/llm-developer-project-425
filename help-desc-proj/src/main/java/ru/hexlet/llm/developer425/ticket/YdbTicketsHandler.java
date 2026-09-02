@@ -15,13 +15,13 @@ public class YdbTicketsHandler implements YcFunction<String, String> {
 
     @Override
     public String handle(String input, Context context) {
-        LOG.debug("input={}", input);
         Event event;
         try {
             event = Event.deserialize(input);
         } catch (Exception e) {
             throw new IllegalArgumentException(e.getMessage(), e);
         }
+        LOG.info("Got event={}", event.getAction());
         Object response;
         response = switch (event.getAction()) {
             case Event.CREATE_TICKET -> ticketService.createTicket(((Event.CreateTicket) event));

@@ -1,5 +1,6 @@
 package ru.hexlet.llm.developer425.ticket;
 
+import ru.hexlet.llm.developer425.core.Pii;
 import ru.hexlet.llm.developer425.ticket.model.AppendMessageResponse;
 import ru.hexlet.llm.developer425.ticket.model.CreateTicketResponse;
 import ru.hexlet.llm.developer425.ticket.model.Event;
@@ -26,7 +27,9 @@ public class TicketService {
         Objects.requireNonNull(model);
         String messageId = UUID.randomUUID().toString();
 
-        TicketRepository.saveMessage(messageId, ticketId, role, text, model, tokensIn, tokensOut, latencyMs,
+        Pii.Masked mask = Pii.mask(text);
+
+        TicketRepository.saveMessage(messageId, ticketId, role, mask.text(), model, tokensIn, tokensOut, latencyMs,
                 Instant.now());
 
         return new AppendMessageResponse(messageId, true);
@@ -42,8 +45,10 @@ public class TicketService {
         String ticketId = UUID.randomUUID().toString();
         Instant createdAt = Instant.now();
 
+        Pii.Masked mask = Pii.mask(event.getText());
+
         TicketRepository.saveTicket(ticketId, event.getUserId(), event.getCategory(),
-                NEW_TICKET_STATUS, event.getText(), createdAt);
+                NEW_TICKET_STATUS, mask.text(), createdAt);
 
         return new CreateTicketResponse(ticketId, createdAt);
     }

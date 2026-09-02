@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import ru.hexlet.llm.developer425.agent.AgentService;
 import ru.hexlet.llm.developer425.agent.model.AgentResponse;
 import ru.hexlet.llm.developer425.agent.model.UserMessage;
+import ru.hexlet.llm.developer425.core.Pii;
+import ru.hexlet.llm.developer425.guard.ContentType;
+import ru.hexlet.llm.developer425.guard.IntentDetector;
 import ru.hexlet.llm.developer425.ticket.TicketService;
 
 import java.io.IOException;
@@ -22,8 +25,10 @@ public class MailProcessingService {
     private final Session session;
     private final AgentService agentService;
     private final TicketService ticketService;
+    private final IntentDetector intentDetector;
 
-    public MailProcessingService(int batch, Session session, AgentService agentService, TicketService ticketService) {
+    public MailProcessingService(int batch, Session session, AgentService agentService, TicketService ticketService,
+                                 IntentDetector intentDetector) {
         this.agentService = agentService;
         this.ticketService = ticketService;
         if (batch < 1) {
@@ -31,6 +36,7 @@ public class MailProcessingService {
         }
         this.batch = batch;
         this.session = session;
+        this.intentDetector = intentDetector;
     }
 
     public int processUnreadMessages(Integer lastProcessed) throws MessagingException {
@@ -88,13 +94,19 @@ public class MailProcessingService {
         if (optionalAddress.isEmpty()) {
             return;
         }
-        LOG.info("MSG num={} from={} subject={}", message.getMessageNumber(), Arrays.toString(from), subject);
+        LOG.info("MSG num={} from={} subject={}", message.getMessageNumber(), Arrays.toString(from),
+                Pii.mask(subject).text());
         Optional<String> firstText = findFirstText(message);
         if (firstText.isEmpty()) {
             LOG.warn("MSG num={} missing from body", message.getMessageNumber());
             return;
         }
         UserMessage userMessage = new UserMessage(optionalAddress.get().toString(), firstText.get());
+        ContentType contentType = intentDetector.classify(userMessage.text())
+                .orElse(ContentType.INJECTION);
+        if (ContentType.INJECTION.equals(contentType)) {
+            LOG.warn("INJECTION detected");
+        }
         AgentResponse response = agentService
                 .sendMessage(userMessage);
         if (Objects.isNull(response.text())) {

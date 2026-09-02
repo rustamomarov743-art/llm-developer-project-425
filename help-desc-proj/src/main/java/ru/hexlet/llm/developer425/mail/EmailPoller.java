@@ -7,11 +7,13 @@ import ru.hexlet.llm.developer425.agent.AgentService;
 import ru.hexlet.llm.developer425.core.BotStateSource;
 import ru.hexlet.llm.developer425.core.Iam;
 import ru.hexlet.llm.developer425.core.PropertySource;
+import ru.hexlet.llm.developer425.guard.ComplexIntentDetector;
 import ru.hexlet.llm.developer425.ticket.TicketService;
 import yandex.cloud.sdk.functions.Context;
 import yandex.cloud.sdk.functions.YcFunction;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class EmailPoller implements YcFunction<String, String> {
     private static final Logger LOG = LoggerFactory.getLogger(EmailPoller.class);
@@ -42,11 +44,15 @@ public class EmailPoller implements YcFunction<String, String> {
         String agentId = PropertySource.get("YC_AGENT_ID");
         String mcpServerUrl = PropertySource.get("YC_YDB_TICKETS_MCP_SERVER_URL");
         String vectorStoreId = PropertySource.get("YC_VECTOR_STORE_ID");
+        String guardModel = PropertySource.getOrDefault("YC_GUARD_MODEL", "yandexgpt-lite");
 
-        AgentService agent = new AgentService(() -> token, folderId, agentId, mcpServerUrl, vectorStoreId);
+        Supplier<String> tokenSupplier = () -> token;
+        AgentService agent = new AgentService(tokenSupplier, folderId, agentId, mcpServerUrl, vectorStoreId);
+        ComplexIntentDetector intentDetector = new ComplexIntentDetector(tokenSupplier, folderId, guardModel);
         Session session = MailSessionBuilder.build(smtpUser, password, smtpHost, smtpPort, imapHost, imapPort, email);
         TicketService ticketService = new TicketService();
-        MailProcessingService mailService = new MailProcessingService(batch, session, agent, ticketService);
+        MailProcessingService mailService = new MailProcessingService(batch, session, agent, ticketService,
+                intentDetector);
 
         String processedMessageNum = BotStateSource.get("last_processed_message_num");
         Integer lastMessageNum = Objects.isNull(processedMessageNum) ? null : Integer.valueOf(processedMessageNum);
