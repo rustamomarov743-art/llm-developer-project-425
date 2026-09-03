@@ -13,7 +13,7 @@ SA_NAME="${SA_NAME:-ai-studio-sa}"
 GATEWAY_NAME="${GATEWAY_NAME:-ydb-tickets-mcp}"
 MCP_SERVER_URL_DEFAULT="${MCP_SERVER_URL:-CHANGE_ME}"
 AGENT_ID="${AGENT_ID:-fvtdutb2q552omlr99sq}"
-VECTOR_STORE_ID="${VECTOR_STORE_ID:-fvtbrihvnea5jhfujree}"
+VECTOR_STORE_ID="${VECTOR_STORE_ID:-fvtrvvnjmd3mq6r8ksju}"
 
 cd "$(dirname "$0")/.."
 
