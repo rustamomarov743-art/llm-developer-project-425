@@ -108,6 +108,8 @@ public class MailProcessingService {
         if (ContentType.INJECTION.equals(contentType)) {
             LOG.warn("INJECTION detected");
             return;
+        } else if (ContentType.OFF_TOPIC.equals(contentType)) {
+            LOG.info("OFF_TOPIC detected");
         }
         AgentResponse response = agentService
                 .sendMessage(userMessage);
@@ -115,6 +117,7 @@ public class MailProcessingService {
             LOG.warn("MSG num={} missing response from agent", message.getMessageNumber());
             return;
         }
+        LOG.info("AGENT_OK len={}", response.text().length());
         sendReply(message, response, userMessage, transport);
         if (Objects.nonNull(response.createdTicketId())) {
             ticketService.appendMessage(response.createdTicketId(), "user", userMessage.text(), "", 0, 0, 0);
@@ -153,6 +156,7 @@ public class MailProcessingService {
             transport.connect();
         }
         transport.sendMessage(reply, original.getFrom());
+        LOG.info("SEND_OK to={}", Arrays.toString(original.getFrom()));
     }
 
     private Optional<String> findFirstText(Message message) throws MessagingException {

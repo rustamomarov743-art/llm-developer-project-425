@@ -70,7 +70,7 @@ public final class TicketRepository {
     private static final String FIND_TICKETS = """
             DECLARE $user_id AS Utf8;
             
-            SELECT id,category,status,created_at
+            SELECT id,category,status,created_at,text
             FROM tickets
             WHERE user_id = $user_id;
             """;
@@ -132,7 +132,7 @@ public final class TicketRepository {
                         readText(resultSet.getColumn("id")),
                         readText(resultSet.getColumn("status")),
                         readText(resultSet.getColumn("category")),
-                        null,
+                        readText(resultSet.getColumn("text")),
                         readTimestamp(resultSet.getColumn("created_at"))));
             }
         }

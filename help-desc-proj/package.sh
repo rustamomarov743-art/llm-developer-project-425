@@ -34,6 +34,9 @@ cp pom.xml "$STAGE/"
 mkdir -p "$STAGE/src/main"
 cp -r src/main/java "$STAGE/src/main/"
 
+mkdir -p "$STAGE/src/main/resources"
+cp -r src/main/resources/logback.xml "$STAGE/src/main/resources/logback.xml"
+
 # src/test в архив не кладём: в облаке тесты гонять незачем, они уже прошли выше.
 
 echo "==> zip"

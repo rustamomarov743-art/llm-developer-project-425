@@ -1,0 +1,18 @@
+<configuration>
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} -- %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="ru.hexlet.llm" level="DEBUG"/>
+    <logger name="yandex.cloud" level="INFO"/>
+    <logger name="com.yandex" level="INFO"/>
+    <logger name="org.apache.http" level="WARN"/>
+    <logger name="io.grpc" level="WARN"/>
+    <logger name="org.asynchttpclient" level="WARN"/>
+
+    <root level="WARN">
+        <appender-ref ref="Console"/>
+    </root>
+</configuration>

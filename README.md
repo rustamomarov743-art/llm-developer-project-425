@@ -19,3 +19,7 @@
 | ydb-endpoint  | ydb-endpoint  | grpcs://...:... |
 | ydb-database  | ydb-database  | /ru-central1/b1g.../etn...   |
 
+Просмотр логов 
+
+yc logging read --resource-ids=<CF-ID> --filter="hexlet"
+
