@@ -102,10 +102,12 @@ public class MailProcessingService {
             return;
         }
         UserMessage userMessage = new UserMessage(optionalAddress.get().toString(), firstText.get());
-        ContentType contentType = intentDetector.classify(userMessage.text())
+        ContentType contentType = intentDetector
+                .classify(userMessage.text())
                 .orElse(ContentType.INJECTION);
         if (ContentType.INJECTION.equals(contentType)) {
             LOG.warn("INJECTION detected");
+            return;
         }
         AgentResponse response = agentService
                 .sendMessage(userMessage);

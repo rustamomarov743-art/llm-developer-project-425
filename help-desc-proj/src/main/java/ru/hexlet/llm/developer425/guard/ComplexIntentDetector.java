@@ -36,6 +36,7 @@ public class ComplexIntentDetector implements IntentDetector {
     public Optional<ContentType> classify(String message) {
         return regexpIntentDetector
                 .classify(message)
+                .filter(ContentType.INJECTION::equals)
                 .or(() -> llmIntentDetector.classify(message));
     }
 }

@@ -13,6 +13,7 @@ SA_NAME="${SA_NAME:-ai-studio-sa}"
 GATEWAY_NAME="${GATEWAY_NAME:-ydb-tickets-mcp}"
 MCP_SERVER_URL_DEFAULT="${MCP_SERVER_URL:-CHANGE_ME}"
 AGENT_ID="${AGENT_ID:-fvtdutb2q552omlr99sq}"
+VECTOR_STORE_ID="${VECTOR_STORE_ID:-fvtbrihvnea5jhfujree}"
 
 cd "$(dirname "$0")/.."
 
@@ -56,11 +57,6 @@ if ! "$YC" serverless function get "$name" >/dev/null 2>&1; then
     "$YC" serverless function create --name "$name" >/dev/null
 fi
 
-VECTOR_STORE_ID_PARAM=""
-if [[ -n "${VECTOR_STORE_ID:-}" ]]; then
-    VECTOR_STORE_ID_PARAM="YC_VECTOR_STORE_ID=$VECTOR_STORE_ID,"
-fi
-
 "$YC" serverless function version create \
     --function-name "$name" --runtime java21 \
     --entrypoint "$entrypoint" \
@@ -68,7 +64,7 @@ fi
     --service-account-id "$SA_ID" \
     --source-path "$ARCHIVE" \
     --format json \
-    --environment "YC_FOLDER_ID=$FOLDER_ID,${VECTOR_STORE_ID_PARAM}YC_AGENT_ID=$AGENT_ID,YC_YDB_TICKETS_MCP_SERVER_URL=$MCP_SERVER_URL,IMAP_HOST=imap.gmail.com,IMAP_PORT=993,IMAP_USER=llm.developer.project.425@gmail.com,SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_USER=llm.developer.project.425@gmail.com,HELPDESK_MAILBOX=llm.developer.project.425@gmail.com" \
+    --environment "YC_FOLDER_ID=$FOLDER_ID,YC_VECTOR_STORE_ID=$VECTOR_STORE_ID,YC_AGENT_ID=$AGENT_ID,YC_YDB_TICKETS_MCP_SERVER_URL=$MCP_SERVER_URL,IMAP_HOST=imap.gmail.com,IMAP_PORT=993,IMAP_USER=llm.developer.project.425@gmail.com,SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_USER=llm.developer.project.425@gmail.com,HELPDESK_MAILBOX=llm.developer.project.425@gmail.com" \
     --secret environment-variable=IMAP_PASSWORD,name=email-credentials,key=password \
     --secret environment-variable=SMTP_PASSWORD,name=email-credentials,key=password \
     --secret environment-variable=YDB_ENDPOINT,name=ydb-endpoint,key=YDB_ENDPOINT \
