@@ -3,25 +3,24 @@ package ru.hexlet.llm.developer425.guard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
-public class ComplexIntentDetector implements IntentDetector {
+public class GuardService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ComplexIntentDetector.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GuardService.class);
 
     private final LlmIntentDetector llmIntentDetector;
 
     private final RegexpIntentDetector regexpIntentDetector;
 
-    public ComplexIntentDetector(Supplier<String> tokenSupplier, String folderId, String model) {
+    public GuardService(Supplier<String> tokenSupplier, String folderId, String model) {
         this.llmIntentDetector = new LlmIntentDetector(tokenSupplier, folderId, model);
         this.regexpIntentDetector = RegexpIntentDetector.INSTANCE;
     }
 
     public static void main(String[] args) {
         var agentService =
-                new ComplexIntentDetector(() ->
+                new GuardService(() ->
                         "change_me",
                         "b1gpecvq19l0fva2r6mc",
                         "yandexgpt-lite");
@@ -31,12 +30,11 @@ public class ComplexIntentDetector implements IntentDetector {
         LOG.info(response.toString());
     }
 
-
-    @Override
-    public Optional<ContentType> classify(String message) {
+    public ContentType classify(String message) {
         return regexpIntentDetector
                 .classify(message)
                 .filter(ContentType.INJECTION::equals)
-                .or(() -> llmIntentDetector.classify(message));
+                .or(() -> llmIntentDetector.classify(message))
+                .orElse(ContentType.INJECTION);
     }
 }

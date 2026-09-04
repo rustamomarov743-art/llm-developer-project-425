@@ -7,7 +7,7 @@ import ru.hexlet.llm.developer425.agent.AgentService;
 import ru.hexlet.llm.developer425.core.BotStateSource;
 import ru.hexlet.llm.developer425.core.Iam;
 import ru.hexlet.llm.developer425.core.PropertySource;
-import ru.hexlet.llm.developer425.guard.ComplexIntentDetector;
+import ru.hexlet.llm.developer425.guard.GuardService;
 import ru.hexlet.llm.developer425.ticket.TicketService;
 import yandex.cloud.sdk.functions.Context;
 import yandex.cloud.sdk.functions.YcFunction;
@@ -48,7 +48,7 @@ public class EmailPoller implements YcFunction<String, String> {
 
         Supplier<String> tokenSupplier = () -> token;
         AgentService agent = new AgentService(tokenSupplier, folderId, agentId, mcpServerUrl, vectorStoreId);
-        ComplexIntentDetector intentDetector = new ComplexIntentDetector(tokenSupplier, folderId, guardModel);
+        GuardService intentDetector = new GuardService(tokenSupplier, folderId, guardModel);
         Session session = MailSessionBuilder.build(smtpUser, password, smtpHost, smtpPort, imapHost, imapPort, email);
         TicketService ticketService = new TicketService();
         MailProcessingService mailService = new MailProcessingService(batch, session, agent, ticketService,

@@ -23,8 +23,7 @@ steps:
         SELECT category, text
         FROM tickets
         WHERE status = 'open'
-        AND created_at < CurrentUtcDate() - Interval("P1D")
-        LIMIT 100;
+        AND created_at < CurrentUtcTimestamp() - Interval("P1D");
       mode: QUERY
       output: '{{ {"search-opened": .} }}'
       next: switch
@@ -58,7 +57,7 @@ steps:
         UPDATE tickets
         SET status = 'escalated'
         WHERE status = 'open'
-        AND created_at < CurrentUtcDate() - Interval("P1D")
+        AND created_at < CurrentUtcTimestamp() - Interval("P1D")
       mode: QUERY
       next: email-sender
       catch: []

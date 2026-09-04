@@ -5,22 +5,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Маскирование персональных данных до записи и до любого логирования.
- *
- * <p>Формат масок задан критерием задания: {@code +7 (***) ***-**-12} — последние две
- * цифры остаются, по ним человек узнаёт свой номер, а посторонний не восстановит его.
- * Тот же принцип применён к карте (последние четыре) и к почте (первая буква и домен).
- *
- * <p>Порядок важен и проверен тестом: <b>карта маскируется раньше телефона</b>. Номер
- * карты, начинающийся с восьмёрки, частично подходит под образец российского телефона, и
- * при обратном порядке от карты остался бы хвост незамаскированных цифр.
- *
- * <p>Карта дополнительно проверяется алгоритмом Луна. Без этой проверки маска легла бы на
- * любую последовательность из шестнадцати цифр — например, на номер заказа, — и в тикете
- * пропала бы информация, ради которой его завели.
- *
- */
 public final class Pii {
 
     private static final Pattern CARD = Pattern.compile("\\b(?:\\d[ -]?){12,18}\\d\\b");
@@ -33,8 +17,6 @@ public final class Pii {
 
     private static final int CARD_MIN_DIGITS = 13;
     private static final int CARD_MAX_DIGITS = 19;
-    private static final int CARD_VISIBLE_DIGITS = 4;
-    private static final int PHONE_VISIBLE_DIGITS = 2;
     private static final int DECIMAL_BASE = 10;
 
     private Pii() {
@@ -71,9 +53,8 @@ public final class Pii {
                 continue;
             }
 
-            String tail = digits.substring(digits.length() - CARD_VISIBLE_DIGITS);
             matcher.appendReplacement(result,
-                    Matcher.quoteReplacement("**** **** **** " + tail));
+                    Matcher.quoteReplacement("****-****-****-****"));
             addOnce(applied, "PII_CARD");
         }
 
@@ -101,11 +82,8 @@ public final class Pii {
         StringBuilder result = new StringBuilder();
 
         while (matcher.find()) {
-            String local = matcher.group(1);
-            String domain = matcher.group(2);
-            String head = local.isEmpty() ? "" : local.substring(0, 1);
             matcher.appendReplacement(result,
-                    Matcher.quoteReplacement(head + "***@" + domain));
+                    Matcher.quoteReplacement("[email]"));
             addOnce(applied, "PII_EMAIL");
         }
 

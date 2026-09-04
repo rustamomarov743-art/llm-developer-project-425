@@ -14,6 +14,7 @@ WORKFLOW_NAME="${WORKFLOW_NAME:-daily-escalation}"
 SA_NAME="${SA_NAME:-ai-studio-sa}"
 AGENT_ID="${AGENT_ID:-fvtdutb2q552omlr99sq}"
 CRON="${CRON:-0 0 9 * * *}"
+DB_NAME="${DB_NAME:-help-desk-db}"
 
 cd "$(dirname "$0")/.."
 
@@ -32,6 +33,17 @@ function_id() {
         | python3 -c 'import sys, json; print(json.load(sys.stdin)["id"])' 2>/dev/null \
         || { echo "не найдена функция $1" >&2; exit 1; }
 }
+
+# Путь базы отдельным полем не приходит: он зашит в endpoint query-параметром
+# ?database=/ru-central1/<cloud>/<db> — оттуда и достаём.
+database_path() {
+    "$YC" ydb database get "$1" --format json \
+        | python3 -c 'import sys, json, urllib.parse as u; print(u.parse_qs(u.urlparse(json.load(sys.stdin)["endpoint"]).query)["database"][0])' \
+        || { echo "не найдена база $1 (переопределяется через DB_NAME)" >&2; exit 1; }
+}
+
+echo "==> база"
+DATABASE="${DATABASE:-$(database_path "$DB_NAME")}"
 
 echo "DATABASE ==> $DATABASE"
 echo "AGENT_ID ==> $AGENT_ID"

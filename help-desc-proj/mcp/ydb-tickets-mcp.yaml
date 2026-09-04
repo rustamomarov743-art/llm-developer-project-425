@@ -21,26 +21,6 @@
       function_id: __YDB_TICKETS_ID__
       tag: $latest
 
-- name: append-message
-  description: >-
-    Добавляет сообщение в существующий тикет поддержки. Идентификатор тикета берётся из
-    ответа create-ticket.
-  input_json_schema: |
-    {
-      "type": "object",
-      "properties": {
-        "action": {"type": "string", "enum": ["append-message" ], "description": "операция"},
-        "ticket_id": {"type": "string", "description": "идентификатор тикета в формате UUID"},
-        "role": {"type": "string", "enum": ["user", "agent" ], "description": "автор сообщения"},
-        "text": {"type": "string", "maxLength": 4000, "description": "текст сообщения"}
-      },
-      "required": ["action", "ticket_id", "role", "text"]
-    }
-  action:
-    function_call:
-      function_id: __YDB_TICKETS_ID__
-      tag: $latest
-
 - name: list-my-tickets
   description: >-
     Возвращает тикеты пользователя по user_id.

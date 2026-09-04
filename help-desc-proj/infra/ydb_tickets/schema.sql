@@ -22,3 +22,9 @@ CREATE TABLE messages (
                           created_at   Timestamp,
                           PRIMARY KEY (ticket_id, id)
 );
+
+CREATE TABLE `bot_state` (
+     `key` Utf8 NOT NULL,
+     `value` Utf8,
+     PRIMARY KEY (`key`)
+)

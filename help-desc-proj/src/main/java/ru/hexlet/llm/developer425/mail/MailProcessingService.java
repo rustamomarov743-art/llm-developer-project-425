@@ -8,7 +8,7 @@ import ru.hexlet.llm.developer425.agent.model.AgentResponse;
 import ru.hexlet.llm.developer425.agent.model.UserMessage;
 import ru.hexlet.llm.developer425.core.Pii;
 import ru.hexlet.llm.developer425.guard.ContentType;
-import ru.hexlet.llm.developer425.guard.IntentDetector;
+import ru.hexlet.llm.developer425.guard.GuardService;
 import ru.hexlet.llm.developer425.ticket.TicketService;
 
 import java.io.IOException;
@@ -25,10 +25,10 @@ public class MailProcessingService {
     private final Session session;
     private final AgentService agentService;
     private final TicketService ticketService;
-    private final IntentDetector intentDetector;
+    private final GuardService guardService;
 
     public MailProcessingService(int batch, Session session, AgentService agentService, TicketService ticketService,
-                                 IntentDetector intentDetector) {
+                                 GuardService guardService) {
         this.agentService = agentService;
         this.ticketService = ticketService;
         if (batch < 1) {
@@ -36,7 +36,7 @@ public class MailProcessingService {
         }
         this.batch = batch;
         this.session = session;
-        this.intentDetector = intentDetector;
+        this.guardService = guardService;
     }
 
     public int processUnreadMessages(Integer lastProcessed) throws MessagingException {
@@ -76,9 +76,8 @@ public class MailProcessingService {
                 LOG.info("GOT_UNSEEN=1");
                 try {
                     process(message, transport);
-                } catch (MessagingException e) {
+                } catch (Exception e) {
                     LOG.error("Failed to process message num: %s".formatted(message.getMessageNumber()), e);
-                    throw new RuntimeException(e);
                 }
                 message.setFlag(Flags.Flag.SEEN, true);
             }
@@ -94,7 +93,7 @@ public class MailProcessingService {
         if (optionalAddress.isEmpty()) {
             return;
         }
-        LOG.info("MSG num={} from={} subject={}", message.getMessageNumber(), Arrays.toString(from),
+        LOG.info("MSG num={} from={} subject={}", message.getMessageNumber(), Pii.mask(Arrays.toString(from)).text(),
                 Pii.mask(subject).text());
         Optional<String> firstText = findFirstText(message);
         if (firstText.isEmpty()) {
@@ -102,11 +101,16 @@ public class MailProcessingService {
             return;
         }
         UserMessage userMessage = new UserMessage(optionalAddress.get().toString(), firstText.get());
-        ContentType contentType = intentDetector
-                .classify(userMessage.text())
-                .orElse(ContentType.INJECTION);
+        ContentType contentType;
+        try {
+            contentType = guardService
+                    .classify(userMessage.text());
+        } catch (Exception e) {
+            LOG.error("Failed to classify message num: %s".formatted(message.getMessageNumber()), e);
+            contentType = ContentType.SAFE;
+        }
         if (ContentType.INJECTION.equals(contentType)) {
-            LOG.warn("INJECTION detected");
+            LOG.warn("ALERT_INJECTION_BLOCKED");
             return;
         } else if (ContentType.OFF_TOPIC.equals(contentType)) {
             LOG.info("OFF_TOPIC detected");
@@ -156,7 +160,7 @@ public class MailProcessingService {
             transport.connect();
         }
         transport.sendMessage(reply, original.getFrom());
-        LOG.info("SEND_OK to={}", Arrays.toString(original.getFrom()));
+        LOG.info("SEND_OK to={}", Pii.mask(Arrays.toString(original.getFrom())).text());
     }
 
     private Optional<String> findFirstText(Message message) throws MessagingException {

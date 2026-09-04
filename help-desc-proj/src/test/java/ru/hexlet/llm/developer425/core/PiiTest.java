@@ -28,15 +28,15 @@ class PiiTest {
     void почтаМаскируется() {
         Pii.Masked masked = Pii.mask("пишите на rustam.omarov@gmail.com");
 
-        assertEquals("пишите на r***@gmail.com", masked.text());
+        assertEquals("пишите на [email]", masked.text());
     }
 
     @Test
-    @DisplayName("карта маскируется до последних четырёх цифр")
+    @DisplayName("карта маскируется полностью")
     void картаМаскируется() {
         Pii.Masked masked = Pii.mask("платил картой 4276 3800 1234 5679");
 
-        assertEquals("платил картой **** **** **** 5679", masked.text());
+        assertEquals("платил картой ****-****-****-****", masked.text());
         assertEquals(java.util.List.of("PII_CARD"), masked.applied());
     }
 
@@ -64,7 +64,7 @@ class PiiTest {
     void картаМаскируетсяРаньшеТелефона() {
         Pii.Masked masked = Pii.mask("карта 8776 8500 1234 5677");
 
-        assertEquals("карта **** **** **** 5677", masked.text());
+        assertEquals("карта ****-****-****-****", masked.text());
         assertEquals(java.util.List.of("PII_CARD"), masked.applied());
     }
 
@@ -74,7 +74,7 @@ class PiiTest {
         Pii.Masked masked = Pii.mask(
                 "телефон +7 (999) 123-45-67, почта a@b.ru, карта 4276 3800 1234 5679");
 
-        assertEquals("телефон +7 (***) ***-**-67, почта a***@b.ru, карта **** **** **** 5679",
+        assertEquals("телефон +7 (***) ***-**-67, почта [email], карта ****-****-****-****",
                 masked.text());
         assertEquals(java.util.List.of("PII_CARD", "PII_PHONE_RU", "PII_EMAIL"),
                 masked.applied());
