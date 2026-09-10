@@ -187,7 +187,7 @@ yc serverless function logs email-poller --since 10m --limit 40
 - [x] `.tests/05-тикет-в-ydb.png`
 - [x] `.tests/06-messages-токены.png`
 - [x] `.tests/07-трейс-ai-studio.png` — три `chat`-спана с `usage`
-- [x] `.tests/01-02-обращение-и-ответ .png` — ответ с `ticket_id` и цитатой обращения
+- [x] `.tests/01-02-обращение-и-ответ.png` — ответ с `ticket_id` и цитатой обращения
 - [x] `.tests/08-injection-blocked.png` — `INJ_IGNORE_PREVIOUS` → `ALERT_INJECTION_BLOCKED`
 - [x] `.tests/09-pii-маски.png` — все три маски в формате задания
 - [x] таблица сверки токенов — 993/122 против 993/122, Δ 0 %

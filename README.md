@@ -254,6 +254,45 @@ SEND_OK to=..                      ответ отправлен
 yc serverless workflow execution get <execution_id>
 ```
 
+## Артефакты прогона
+
+Скриншоты сквозного сценария от 10.09.2026 лежат в [`.tests/`](.tests/) — воспроизводить
+шаги вручную не нужно. Сценарий этого прогона: тикет `5a3784fe-df54-43e5-a55d-f7220c13ddab`,
+трейс `7ad1ca4154d987e757bb07461d17ecc2`. Порядок прогона и запросы —
+в [qa/RUNBOOK.md](help-desc-proj/qa/RUNBOOK.md).
+
+| Скриншот | Что на нём |
+|---|---|
+| [01-02 — обращение и ответ](.tests/01-02-обращение-и-ответ.png) | Письмо «у меня не работает принтер» и ответ бота с `ticket_id` в почтовом клиенте |
+| [03 — трейс поллера](.tests/03-трейс-поллера.png) | Цепочка `EmailPoller invoked` → `GOT_UNSEEN=1` → `MSG num=` → `AGENT_OK len=` → `SEND_OK to=`; адрес отправителя замаскирован как `[email]` |
+| [04 — list-my-tickets](.tests/04-list-my-tickets.png) | Самопроверка через CF: `yc serverless function invoke ydb-tickets` возвращает тот же тикет, что назвал агент в письме |
+| [05 — тикет в YDB](.tests/05-тикет-в-ydb.png) | Запись в `tickets`: `user_id`, `category=bug`, `status=open`, текст обращения |
+| [06 — messages и токены](.tests/06-messages-токены.png) | Две строки диалога; у ответа агента `model=yandexgpt-5-pro`, `tokens_in=993`, `tokens_out=122`, `latency_ms=13937` |
+| [07 — трейс AI Studio](.tests/07-трейс-ai-studio.png) | Три span'а `chat` с `usage` по шагам: `mcp_list_tools` → `chat` → `search_index` → `chat` → `create-ticket` → `chat` |
+| [08 — блокировка инъекции](.tests/08-injection-blocked.png) | `RegexpIntentDetector -- Pattern INJ_IGNORE_PREVIOUS found` → `ALERT_INJECTION_BLOCKED`, ответ не отправлен |
+| [09 — маскирование PII](.tests/09-pii-маски.png) | В `tickets.text`: `+7 (***) ***-**-89`, `[email]`, `****-****-****-****` |
+
+### Сверка токенов
+
+`usage` из ответа Responses API против `messages` в YDB — расхождение 0 % при допуске 10 %:
+
+| | `usage` | `messages` |
+|---|---|---|
+| `input_tokens` / `tokens_in` | 993 | 993 |
+| `output_tokens` / `tokens_out` | 122 | 122 |
+
+Токены берёт сам поллер (`AgentService.parseResponse` → `MailProcessingService`), а не агент,
+поэтому значения совпадают точно. По шагам трейса (скриншот 07) `usage` раскладывается так:
+
+| span | `input_tokens` | из кэша | `output_tokens` |
+|---|---|---|---|
+| `chat` `iteration_index=0` | 993 | 0 | 15 |
+| `chat` `iteration_index=1` | 2787 | 992 | 48 |
+| `chat` `iteration_index=2` | 2929 | 2784 | 59 |
+
+`tokens_in` — вход первого обращения, до того как в контекст попали результаты
+`search_index`; `tokens_out` — сумма выходов всех трёх (15 + 48 + 59).
+
 ## Что работает
 
 - Приём письма, ответ по базе знаний со ссылкой на документ, ответ в течение минуты
