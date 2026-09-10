@@ -105,6 +105,7 @@ URL. `functionCall` вызывает `email-sender` от сервисного а
 
 Агент `help-desk` живёт в Agent Atelier, `agent_id` — `fvtdutb2q552omlr99sq`; системный
 промпт см в [prepare.md](.script/prepare.md).
+Ссылка на агента: https://aistudio.yandex.ru/platform/folders/b1gpecvq19l0fva2r6mc/agents/fvtdutb2q552omlr99sq
 
 ### MCP-инструменты
 
