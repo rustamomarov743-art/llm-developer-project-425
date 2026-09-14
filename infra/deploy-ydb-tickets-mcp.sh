@@ -9,11 +9,9 @@
 #
 set -euo pipefail
 
-YC="${YC:-$HOME/yandex-cloud/bin/yc}"
-GATEWAY_NAME="${GATEWAY_NAME:-ydb-tickets-mcp}"
-SA_NAME="${SA_NAME:-ai-studio-sa}"
-
 cd "$(dirname "$0")/.."
+source infra/lib/env.sh
+require YC SA_NAME GATEWAY_NAME
 
 RENDER_ONLY=false
 for arg in "$@"; do

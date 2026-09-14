@@ -9,14 +9,9 @@
 #
 set -euo pipefail
 
-YC="${YC:-$HOME/yandex-cloud/bin/yc}"
-WORKFLOW_NAME="${WORKFLOW_NAME:-daily-escalation}"
-SA_NAME="${SA_NAME:-ai-studio-sa}"
-AGENT_ID="${AGENT_ID:-fvtdutb2q552omlr99sq}"
-CRON="${CRON:-0 0 9 * * *}"
-DB_NAME="${DB_NAME:-help-desk-db}"
-
 cd "$(dirname "$0")/.."
+source infra/lib/env.sh
+require YC SA_NAME DB_NAME WORKFLOW_NAME WORKFLOW_CRON YC_AGENT_ID
 
 RENDER_ONLY=false
 for arg in "$@"; do
@@ -39,14 +34,14 @@ function_id() {
 database_path() {
     "$YC" ydb database get "$1" --format json \
         | python3 -c 'import sys, json, urllib.parse as u; print(u.parse_qs(u.urlparse(json.load(sys.stdin)["endpoint"]).query)["database"][0])' \
-        || { echo "не найдена база $1 (переопределяется через DB_NAME)" >&2; exit 1; }
+        || { echo "не найдена база $1 (задаётся в DB_NAME)" >&2; exit 1; }
 }
 
 echo "==> база"
-DATABASE="${DATABASE:-$(database_path "$DB_NAME")}"
+DATABASE=$(database_path "$DB_NAME")
 
 echo "DATABASE ==> $DATABASE"
-echo "AGENT_ID ==> $AGENT_ID"
+echo "AGENT_ID ==> $YC_AGENT_ID"
 
 echo "==> ID функций"
 EMAIL_SENDER_ID=$(function_id email-sender)
@@ -58,7 +53,7 @@ mkdir -p target/workflow
 sed \
     -e "s|__EMAIL_SENDER_ID__|$EMAIL_SENDER_ID|" \
     -e "s|__DATABASE__|$DATABASE|" \
-    -e "s|__AGENT_ID__|$AGENT_ID|" \
+    -e "s|__AGENT_ID__|$YC_AGENT_ID|" \
     src/workflow.yaml > "$RENDERED"
 
 if grep -q '__[A-Z_]*__' "$RENDERED"; then
@@ -89,7 +84,7 @@ fi
     --name "$WORKFLOW_NAME" \
     --yaml-spec "$RENDERED" \
     --service-account-id "$SA_ID" \
-    --schedule-cron-expression "$CRON" \
+    --schedule-cron-expression "$WORKFLOW_CRON" \
     --schedule-timezone Europe/Moscow \
     --format json \
     | python3 -c '

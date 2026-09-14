@@ -8,27 +8,21 @@
 
 set -euo pipefail
 
-YC="${YC:-$HOME/yandex-cloud/bin/yc}"
-SA_NAME="${SA_NAME:-ai-studio-sa}"
-GATEWAY_NAME="${GATEWAY_NAME:-ydb-tickets-mcp}"
-MCP_SERVER_URL_DEFAULT="${MCP_SERVER_URL:-CHANGE_ME}"
-AGENT_ID="${AGENT_ID:-fvtdutb2q552omlr99sq}"
-VECTOR_STORE_ID="${VECTOR_STORE_ID:-fvtrvvnjmd3mq6r8ksju}"
-
 cd "$(dirname "$0")/.."
+source infra/lib/env.sh
+require YC SA_NAME GATEWAY_NAME YC_FOLDER_ID YC_AGENT_ID YC_VECTOR_STORE_ID \
+    HELPDESK_MAILBOX IMAP_HOST IMAP_PORT IMAP_USER SMTP_HOST SMTP_PORT SMTP_USER
 
 echo "==> параметры окружения"
 SA_ID=$("$YC" iam service-account get "$SA_NAME" --format json \
     | python3 -c 'import sys, json; print(json.load(sys.stdin)["id"])')
-FOLDER_ID=$("$YC" config get folder-id)
-MCP_SERVER_URL=$("$YC" serverless mcp-gateway get --name "$GATEWAY_NAME" --format json 2>/dev/null \
-    | python3 -c 'import sys, json; print(json.load(sys.stdin)["base_domain"])' 2>/dev/null) \
-    || MCP_SERVER_URL=""
-if [[ -z "$MCP_SERVER_URL" ]]; then
-    MCP_SERVER_URL="$MCP_SERVER_URL_DEFAULT"
-    echo "    шлюза $GATEWAY_NAME нет, беру значение по умолчанию"
+# Адрес шлюза можно задать в .env; если пусто — берём домен шлюза GATEWAY_NAME.
+if [[ -z "${YC_YDB_TICKETS_MCP_SERVER_URL:-}" ]]; then
+    YC_YDB_TICKETS_MCP_SERVER_URL=$("$YC" serverless mcp-gateway get --name "$GATEWAY_NAME" --format json 2>/dev/null \
+        | python3 -c 'import sys, json; print(json.load(sys.stdin)["base_domain"])' 2>/dev/null) \
+        || { echo "не найден шлюз $GATEWAY_NAME — задеплойте его или задайте YC_YDB_TICKETS_MCP_SERVER_URL" >&2; exit 1; }
 fi
-printf '    аккаунт: %s\n    folder:  %s\n    mcp:     %s\n' "$SA_ID" "$FOLDER_ID" "$MCP_SERVER_URL"
+printf '    аккаунт: %s\n    folder:  %s\n    mcp:     %s\n' "$SA_ID" "$YC_FOLDER_ID" "$YC_YDB_TICKETS_MCP_SERVER_URL"
 
 BUILD=true
 if [[ "${1:-}" == "--no-build" ]]; then
@@ -64,7 +58,8 @@ fi
     --service-account-id "$SA_ID" \
     --source-path "$ARCHIVE" \
     --format json \
-    --environment "YC_FOLDER_ID=$FOLDER_ID,YC_VECTOR_STORE_ID=$VECTOR_STORE_ID,YC_AGENT_ID=$AGENT_ID,YC_YDB_TICKETS_MCP_SERVER_URL=$MCP_SERVER_URL,IMAP_HOST=imap.gmail.com,IMAP_PORT=993,IMAP_USER=llm.developer.project.425@gmail.com,SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_USER=llm.developer.project.425@gmail.com,HELPDESK_MAILBOX=llm.developer.project.425@gmail.com" \
+    --environment "$(env_list YC_FOLDER_ID YC_VECTOR_STORE_ID YC_AGENT_ID YC_YDB_TICKETS_MCP_SERVER_URL \
+        YC_GUARD_MODEL EMAIL_BATCH IMAP_HOST IMAP_PORT IMAP_USER SMTP_HOST SMTP_PORT SMTP_USER HELPDESK_MAILBOX)" \
     --secret environment-variable=IMAP_PASSWORD,name=email-credentials,key=password \
     --secret environment-variable=SMTP_PASSWORD,name=email-credentials,key=password \
     --secret environment-variable=YDB_ENDPOINT,name=ydb-endpoint,key=YDB_ENDPOINT \

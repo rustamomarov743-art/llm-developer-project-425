@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
-YC="${YC:-$HOME/yandex-cloud/bin/yc}"
-FOLDER_ID=$("$YC" config get folder-id)
-TOKEN=$("$YC" iam create-token)
-
+set -euo pipefail
 
 cd "$(dirname "$0")/.."
+source infra/lib/env.sh
+require YC YC_FOLDER_ID
+
+TOKEN=$("$YC" iam create-token)
 
 yandex-ai-studio vector-stores local docs/*.md \
   --name "help-desk-kb" \
-  --folder-id "$FOLDER_ID" \
+  --folder-id "$YC_FOLDER_ID" \
   --auth "$TOKEN"

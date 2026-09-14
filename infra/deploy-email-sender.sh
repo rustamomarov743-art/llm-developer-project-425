@@ -8,17 +8,14 @@
 
 set -euo pipefail
 
-YC="${YC:-$HOME/yandex-cloud/bin/yc}"
-SA_NAME="${SA_NAME:-ai-studio-sa}"
-
-
 cd "$(dirname "$0")/.."
+source infra/lib/env.sh
+require YC SA_NAME YC_FOLDER_ID OPERATOR_EMAIL HELPDESK_MAILBOX SMTP_HOST SMTP_PORT SMTP_USER
 
 echo "==> параметры окружения"
 SA_ID=$("$YC" iam service-account get "$SA_NAME" --format json \
     | python3 -c 'import sys, json; print(json.load(sys.stdin)["id"])')
-FOLDER_ID=$("$YC" config get folder-id)
-printf '    аккаунт: %s\n    folder:  %s\n    mcp:     %s\n' "$SA_ID" "$FOLDER_ID"
+printf '    аккаунт: %s\n    folder:  %s\n' "$SA_ID" "$YC_FOLDER_ID"
 
 BUILD=true
 if [[ "${1:-}" == "--no-build" ]]; then
@@ -54,6 +51,6 @@ fi
     --service-account-id "$SA_ID" \
     --source-path "$ARCHIVE" \
     --format json \
-    --environment YC_FOLDER_ID="$FOLDER_ID",OPERATOR_EMAIL="llm.developer.project.425@gmail.com",SMTP_HOST="smtp.gmail.com",SMTP_PORT="587",SMTP_USER="llm.developer.project.425@gmail.com",HELPDESK_MAILBOX="llm.developer.project.425@gmail.com" \
+    --environment "$(env_list YC_FOLDER_ID OPERATOR_EMAIL SMTP_HOST SMTP_PORT SMTP_USER HELPDESK_MAILBOX)" \
     --secret environment-variable=SMTP_PASSWORD,name=email-credentials,key=password \
     | python3 -c 'import sys, json; v=json.load(sys.stdin); print("    версия:", v["id"])'

@@ -67,11 +67,12 @@ Cron 09:00 → workflow daily-escalation
 | `src/main/java/.../core/` | Общее: YDB-клиент, IAM-токен, JSON, настройки, курсор поллера, нормализация текста для guard |
 | `src/test/java/` | Unit-тесты PII-маски и JSON-контракта `ydb-tickets` |
 | `docs/*.md` | База знаний RAG (11 документов). Всё содержимое каталога загружается в vector store |
-| `infra/deploy-*.sh` | Скрипты деплоя, по одному на компонент |
+| `infra/deploy-*.sh` | Скрипты деплоя, по одному на компонент; `deploy-all.sh` запускает все по порядку |
+| `infra/lib/env.sh` | Общее для скриптов: загрузка `.env`, проверка обязательных переменных |
 | `package.sh` | `mvn verify` и сборка архива `target/help-desc.zip` для Cloud Functions |
 | `.script/prepare.md` | Команды подготовки облака: база, сервисный аккаунт, роли, секреты |
 | `.tests/` | Скриншоты сквозного прогона |
-| `.env.example` | Имена переменных окружения |
+| `.env.example` | Имена переменных для деплоя и функций |
 
 `...` — пакет `ru/hexlet/llm/developer425`. Проект на Java, поэтому вместо
 `email_poller.py`, `email_sender.py` и `ydb_tickets/index.py` из рекомендованной схемы —
@@ -80,8 +81,13 @@ Cron 09:00 → workflow daily-escalation
 
 ## Развёртывание
 
-Нужны `yc` (по умолчанию ищется в `~/yandex-cloud/bin/yc`, переопределяется через `YC`),
-JDK 21, Maven, `python3`; для базы знаний — CLI `yandex-ai-studio`.
+Нужны `yc`, JDK 21, Maven, `python3`; для базы знаний — CLI `yandex-ai-studio`.
+
+Все параметры скрипты берут из `.env` в корне репозитория: скопируйте
+[`.env.example`](.env.example) и заполните. Значений по умолчанию в скриптах нет — если
+переменная пуста, скрипт перечислит недостающие и остановится. Переменная, заданная при
+запуске (`YC_AGENT_ID=... ./infra/deploy-email-poller.sh`), приоритетнее `.env`. Секреты в
+`.env` не нужны: функции получают их из Lockbox.
 
 ### 1. Подготовка облака
 
@@ -94,28 +100,37 @@ JDK 21, Maven, `python3`; для базы знаний — CLI `yandex-ai-studio
 
 ### 2. Компоненты
 
-Запускать из корня репозитория в указанном порядке:
+Всё сразу, в нужном порядке и с одной сборкой архива:
 
-| # | Компонент | Скрипт | Зависит от | Параметры (env) |
+```bash
+./infra/deploy-all.sh              # --no-build — без пересборки, --kb — пересоздать vector store
+```
+
+Повторный запуск безопасен: vector store создаётся, только если `YC_VECTOR_STORE_ID` пуст
+(после этого скрипт останавливается — впишите ID в `.env` и запустите снова); остальные
+компоненты создаются или обновляются.
+
+Отдельный компонент обновляется своим скриптом:
+
+| # | Компонент | Скрипт | Зависит от | Переменные из `.env` (кроме `YC`) |
 |---|---|---|---|---|
-| 1 | CF `ydb-tickets` | `./infra/deploy-ydb-tickets.sh` | YDB, секреты `ydb-*` | `SA_NAME` |
-| 2 | MCP-шлюз `ydb-tickets-mcp` | `./infra/deploy-ydb-tickets-mcp.sh` | CF `ydb-tickets` | `GATEWAY_NAME`, `SA_NAME` |
-| 3 | Vector store `help-desk-kb` | `./infra/deploy-help-desc-kb.sh` | — | — |
-| 4 | CF `email-sender` | `./infra/deploy-email-sender.sh` | секрет `email-credentials` | `SA_NAME` |
-| 5 | CF `email-poller` | `./infra/deploy-email-poller.sh` | 1–3, агент | `AGENT_ID`, `VECTOR_STORE_ID`, `GATEWAY_NAME`, `SA_NAME` |
-| 6 | Таймер поллера | `./infra/deploy-email-poller-trigger.sh` | CF `email-poller` | `SA_NAME` |
-| 7 | Workflow `daily-escalation` | `./infra/deploy-daily-escalation-workflow.sh` | CF `email-sender`, агент | `AGENT_ID`, `DB_NAME`, `CRON`, `WORKFLOW_NAME`, `SA_NAME` |
+| 1 | CF `ydb-tickets` | `./infra/deploy-ydb-tickets.sh` | YDB, секреты `ydb-*` | `SA_NAME`, `YC_FOLDER_ID` |
+| 2 | MCP-шлюз `ydb-tickets-mcp` | `./infra/deploy-ydb-tickets-mcp.sh` | CF `ydb-tickets` | `SA_NAME`, `GATEWAY_NAME` |
+| 3 | Vector store `help-desk-kb` | `./infra/deploy-help-desc-kb.sh` | — | `YC_FOLDER_ID` |
+| 4 | CF `email-sender` | `./infra/deploy-email-sender.sh` | секрет `email-credentials` | `SA_NAME`, `YC_FOLDER_ID`, `OPERATOR_EMAIL`, `HELPDESK_MAILBOX`, `SMTP_*` |
+| 5 | CF `email-poller` | `./infra/deploy-email-poller.sh` | 1–3, агент | `SA_NAME`, `GATEWAY_NAME`, `YC_*`, `HELPDESK_MAILBOX`, `IMAP_*`, `SMTP_*`, `EMAIL_BATCH` |
+| 6 | Таймер поллера | `./infra/deploy-email-poller-trigger.sh` | CF `email-poller` | `SA_NAME`, `YC_FOLDER_ID` |
+| 7 | Workflow `daily-escalation` | `./infra/deploy-daily-escalation-workflow.sh` | CF `email-sender`, агент | `SA_NAME`, `DB_NAME`, `WORKFLOW_NAME`, `WORKFLOW_CRON`, `YC_AGENT_ID` |
 
 - **Функции (1, 4, 5)** собирают архив через `package.sh` и создают новую версию. Флаг
   `--no-build` деплоит уже собранный `target/help-desc.zip`.
 - **Шлюз и workflow (2, 7)** подставляют ID функций и путь к базе из `yc` и пишут готовую
   спецификацию в `target/`. Флаг `--render` только печатает её, без обращения к облаку.
-- **Vector store (3)** загружает `docs/*.md`; ID созданного хранилища передайте в шаг 5
-  через `VECTOR_STORE_ID`.
-- **Таймер (6)** только создаётся: повторный запуск упадёт, если триггер уже есть.
-
-Секреты функции получают из Lockbox (`--secret environment-variable=...`), несекретные
-параметры скрипты передают переменными окружения.
+- **Vector store (3)** загружает `docs/*.md`; ID созданного хранилища впишите в `.env`
+  как `YC_VECTOR_STORE_ID` перед шагом 5.
+- **Поллер (5)** берёт адрес шлюза из `YC_YDB_TICKETS_MCP_SERVER_URL`, а если он пуст —
+  домен шлюза `GATEWAY_NAME`.
+- **Таймер (6)** создаётся или обновляется и снимается с паузы, если был приостановлен.
 
 Локальная сборка и тесты: `mvn verify`.
 
