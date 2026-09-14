@@ -5,7 +5,7 @@
 #   ./deploy-daily-escalation-workflow.sh            # обновить workflow
 #   ./deploy-daily-escalation-workflow.sh --render   # только показать готовую спецификацию, без облака
 #
-# ID функций подставляются здесь и только здесь: в workflow/daily-escalation.yaml лежат плейсхолдеры.
+# ID функций подставляются здесь и только здесь: в src/workflow.yaml лежат плейсхолдеры.
 #
 set -euo pipefail
 
@@ -53,13 +53,13 @@ EMAIL_SENDER_ID=$(function_id email-sender)
 
 printf '    email-sender:              %s \n' "$EMAIL_SENDER_ID"
 
-RENDERED=workflow/target/daily-escalation.yaml
-mkdir -p workflow/target
+RENDERED=target/workflow/daily-escalation.yaml
+mkdir -p target/workflow
 sed \
     -e "s|__EMAIL_SENDER_ID__|$EMAIL_SENDER_ID|" \
     -e "s|__DATABASE__|$DATABASE|" \
     -e "s|__AGENT_ID__|$AGENT_ID|" \
-    workflow/daily-escalation.yaml > "$RENDERED"
+    src/workflow.yaml > "$RENDERED"
 
 if grep -q '__[A-Z_]*__' "$RENDERED"; then
     echo "в спецификации остались неподставленные плейсхолдеры:" >&2

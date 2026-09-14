@@ -5,7 +5,7 @@
 #   ./deploy-ydb-tickets-mcp.sh            # обновить шлюз
 #   ./deploy-ydb-tickets-mcp.sh --render   # только показать готовую спецификацию, без облака
 #
-# ID функций подставляются здесь и только здесь: в mcp/ydb-tickets-mcp.yaml лежат плейсхолдеры.
+# ID функций подставляются здесь и только здесь: в src/ydb_tickets/mcp-tools.yaml лежат плейсхолдеры.
 #
 set -euo pipefail
 
@@ -36,11 +36,11 @@ YDB_TICKETS_ID=$(function_id ydb-tickets)
 
 printf '    ydb-tickets:              %s \n' "$YDB_TICKETS_ID"
 
-RENDERED=mcp/target/tools.rendered.yaml
-mkdir -p mcp/target
+RENDERED=target/mcp/tools.rendered.yaml
+mkdir -p target/mcp
 sed \
     -e "s|__YDB_TICKETS_ID__|$YDB_TICKETS_ID|" \
-    mcp/ydb-tickets-mcp.yaml > "$RENDERED"
+    src/ydb_tickets/mcp-tools.yaml > "$RENDERED"
 
 if grep -q '__[A-Z_]*__' "$RENDERED"; then
     echo "в спецификации остались неподставленные плейсхолдеры:" >&2

@@ -119,3 +119,5 @@ target/
 *:Zone.Identifier
 
 .env
+
+.my/log

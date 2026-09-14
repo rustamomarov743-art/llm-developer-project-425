@@ -33,7 +33,7 @@ steps:
       choices:
         - condition: (."search-opened".ResultSets[0] | length) == 0
           next: finish
-        - condition: (."search-opened".ResultSets[0] | length) > 0
+        - condition: "true"
           next: aiStudioAgent
   aiStudioAgent:
     aiStudioAgent:

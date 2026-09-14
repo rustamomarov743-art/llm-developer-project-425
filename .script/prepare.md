@@ -153,4 +153,4 @@ yc lockbox secret create \
 
 # Шаг 5
 ## Создать таблицы tickets и messages 
-см. [schema.sql](../help-desc-proj/infra/ydb_tickets/schema.sql)
+см. [schema.sql](../src/ydb_tickets/schema.sql)

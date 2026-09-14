@@ -97,11 +97,24 @@ URL. `functionCall` вызывает `email-sender` от сервисного а
 | CF `email-poller` | `src/main/java/.../mail/EmailPoller.java` | Точка входа поллера, раз в минуту по таймеру |
 | CF `ydb-tickets` | `src/main/java/.../ticket/YdbTicketsHandler.java` | Обработчик MCP-инструментов, пишет и читает YDB |
 | CF `email-sender` | `src/main/java/.../mail/EmailSender.java` | Отправка дайджеста оператору по SMTP |
-| Шлюз `ydb-tickets-mcp` | `mcp/ydb-tickets-mcp.yaml` | Спецификация MCP-инструментов |
-| Workflow `daily-escalation` | `workflow/daily-escalation.yaml` | Авто-эскалация, YaWL |
+| Шлюз `ydb-tickets-mcp` | `src/ydb_tickets/mcp-tools.yaml` | Спецификация MCP-инструментов |
+| Workflow `daily-escalation` | `src/workflow.yaml` | Авто-эскалация, YaWL |
 | База знаний | `docs/*.md` | 11 документов: онбординг, отпуск, доступы, инциденты, оборудование |
-| Схема БД | `infra/ydb_tickets/schema.sql` | Таблицы `tickets`, `messages`, `bot_state` |
+| Схема БД | `src/ydb_tickets/schema.sql` | Таблицы `tickets`, `messages`, `bot_state` |
 | Скрипты деплоя | `infra/deploy-*.sh` | По скрипту на компонент |
+
+Проект на Java, поэтому раскладка отличается от рекомендованной в задании (Python):
+
+| В задании | Здесь |
+|---|---|
+| `src/email_poller.py` | `src/main/java/.../mail/EmailPoller.java` |
+| `src/email_sender.py` | `src/main/java/.../mail/EmailSender.java` |
+| `src/workflow.yaml` | `src/workflow.yaml` |
+| `src/ydb_tickets/index.py` | `src/main/java/.../ticket/YdbTicketsHandler.java` (PII-маска — `core/Pii.java`, guardrail — `guard/`) |
+| `src/ydb_tickets/schema.sql` | `src/ydb_tickets/schema.sql` |
+| `src/ydb_tickets/mcp-tools.yaml` | `src/ydb_tickets/mcp-tools.yaml` |
+
+Maven читает из `src/` только `main/` и `test/`, YAML и SQL рядом с ними в сборку не попадают.
 
 Агент `help-desk` живёт в Agent Atelier, `agent_id` — `fvtdutb2q552omlr99sq`; системный
 промпт см в [prepare.md](.script/prepare.md).
@@ -131,7 +144,7 @@ URL. `functionCall` вызывает `email-sender` от сервисного а
 ### Trusted и untrusted контекст
 
 **Trusted** — то, что задаём мы сами: системный промпт агента, спецификация MCP-инструментов
-(`mcp/ydb-tickets-mcp.yaml`), список разрешённых инструментов в коде поллера, SQL-запросы.
+(`src/ydb_tickets/mcp-tools.yaml`), список разрешённых инструментов в коде поллера, SQL-запросы.
 
 **Untrusted** — всё, что пришло снаружи: текст письма, тема письма, адрес отправителя,
 содержимое документов базы знаний.
@@ -205,7 +218,6 @@ IAM-токен функции берут из metadata service, вручную �
 Подготовка облака — база, сервисный аккаунт, роли, секреты, агент: [prepare.md](.script/prepare.md).
 
 ```bash
-cd help-desc-proj
 ./infra/deploy-ydb-tickets.sh            # CF с MCP-инструментами
 ./infra/deploy-ydb-tickets-mcp.sh        # MCP-шлюз
 ./infra/deploy-help-desc-kb.sh           # vector store из docs/*.md
@@ -222,7 +234,7 @@ cd help-desc-proj
 Локальная сборка и тесты:
 
 ```bash
-cd help-desc-proj && mvn verify
+mvn verify
 ```
 
 ## Наблюдаемость
@@ -259,7 +271,7 @@ yc serverless workflow execution get <execution_id>
 Скриншоты сквозного сценария от 10.09.2026 лежат в [`.tests/`](.tests/) — воспроизводить
 шаги вручную не нужно. Сценарий этого прогона: тикет `5a3784fe-df54-43e5-a55d-f7220c13ddab`,
 трейс `7ad1ca4154d987e757bb07461d17ecc2`. Порядок прогона и запросы —
-в [qa/RUNBOOK.md](help-desc-proj/qa/RUNBOOK.md).
+в [qa/RUNBOOK.md](qa/RUNBOOK.md).
 
 | Скриншот | Что на нём |
 |---|---|
