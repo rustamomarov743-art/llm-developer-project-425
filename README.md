@@ -39,9 +39,9 @@ Timer (раз в минуту) → CF email-poller
     │     ├─ file_search → vector store help-desk-kb (docs/*.md)
     │     └─ MCP → шлюз ydb-tickets-mcp → CF ydb-tickets → YDB
     ├─ SMTP: ответ отправителю
-    └─ YDB: реплики диалога и токены в messages
+    └─ YDB: если агент создал тикет — реплики диалога и токены в messages
 
-Cron 09:00 → workflow daily-escalation
+Cron WORKFLOW_CRON (Europe/Moscow) → workflow daily-escalation
     ├─ databaseQuery: открытые тикеты старше суток
     ├─ switch: если таких нет — finish
     ├─ aiStudioAgent: текст дайджеста
@@ -57,7 +57,7 @@ Cron 09:00 → workflow daily-escalation
 | `src/ydb_tickets/schema.sql` | DDL таблиц `tickets` (с индексом `tickets_by_user`), `messages`, `bot_state` |
 | `src/ydb_tickets/mcp-tools.yaml` | MCP-инструменты `create-ticket` и `list-my-tickets` для шлюза |
 | `src/main/java/.../mail/EmailPoller.java` | Точка входа CF `email-poller` |
-| `src/main/java/.../mail/MailProcessingService.java` | Цикл обработки письма: guard → агент → SMTP → запись в `messages` |
+| `src/main/java/.../mail/MailProcessingService.java` | Цикл обработки письма: guard → агент → SMTP → запись в `messages`, если создан тикет |
 | `src/main/java/.../mail/EmailSender.java` | Точка входа CF `email-sender`: отправка дайджеста по SMTP |
 | `src/main/java/.../ticket/YdbTicketsHandler.java` | Точка входа CF `ydb-tickets`: разбор вызова от MCP-шлюза |
 | `src/main/java/.../ticket/TicketService.java`, `TicketRepository.java` | Создание и чтение тикетов, запись сообщений в YDB с PII-маской |
@@ -81,7 +81,8 @@ Cron 09:00 → workflow daily-escalation
 
 ## Развёртывание
 
-Нужны `yc`, JDK 21, Maven, `python3`; для базы знаний — CLI `yandex-ai-studio`.
+Нужны `yc`, JDK 21, Maven, `python3`, `jq` (команды `prepare.md`); для базы знаний — CLI
+`yandex-ai-studio`.
 
 Все параметры скрипты берут из `.env` в корне репозитория: скопируйте
 [`.env.example`](.env.example) и заполните. Значений по умолчанию в скриптах нет — если
@@ -97,6 +98,9 @@ Cron 09:00 → workflow daily-escalation
 2. Сервисный аккаунт `ai-studio-sa` с ролями на каталог.
 3. Секреты Lockbox: `ydb-endpoint`, `ydb-database`, `email-credentials` (app-password ящика).
 4. Агент `help-desk` в AI Studio — см. [«Агент help-desk»](#агент-help-desk).
+
+Имена базы и сервисного аккаунта должны совпадать с `DB_NAME` и `SA_NAME` в `.env`, ID
+каталога и агента — с `YC_FOLDER_ID` и `YC_AGENT_ID`.
 
 ### 2. Компоненты
 
@@ -125,7 +129,8 @@ Cron 09:00 → workflow daily-escalation
 - **Функции (1, 4, 5)** собирают архив через `package.sh` и создают новую версию. Флаг
   `--no-build` деплоит уже собранный `target/help-desc.zip`.
 - **Шлюз и workflow (2, 7)** подставляют ID функций и путь к базе из `yc` и пишут готовую
-  спецификацию в `target/`. Флаг `--render` только печатает её, без обращения к облаку.
+  спецификацию в `target/`. Флаг `--render` только печатает её: ID читаются из облака, но
+  шлюз и workflow не меняются.
 - **Vector store (3)** загружает `docs/*.md`; ID созданного хранилища впишите в `.env`
   как `YC_VECTOR_STORE_ID` перед шагом 5.
 - **Поллер (5)** берёт адрес шлюза из `YC_YDB_TICKETS_MCP_SERVER_URL`, а если он пуст —

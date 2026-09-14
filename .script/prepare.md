@@ -14,14 +14,6 @@ yc ydb database get help-desk-db --format json | jq -r .status
 ```bash
 yc serverless function list
 ```
-## Создать таблицу bot_state в БД для хранения текущего состояние бота
-```
-CREATE TABLE bot_state (
-  key           Utf8,        -- Ключ
-  value         Utf8,        -- значение
-  PRIMARY KEY (key)
-);
-```
 ## Получить секреты для LockBox
 ```bash
 ENDPOINT=$(yc ydb database get help-desk-db --format json | jq -r .endpoint)
@@ -98,5 +90,5 @@ yc lockbox secret create \
 ```
 
 # Шаг 5
-## Создать таблицы tickets и messages 
+## Создать таблицы tickets, messages и bot_state
 см. [schema.sql](../src/ydb_tickets/schema.sql)
