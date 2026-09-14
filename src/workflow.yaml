@@ -31,10 +31,10 @@ steps:
   switch:
     switch:
       choices:
-        - condition: (."search-opened".ResultSets[0] | length) == 0
-          next: finish
-        - condition: "true"
+        - condition: (."search-opened".ResultSets[0] | length) > 0
           next: aiStudioAgent
+        - condition: "true"
+          next: finish
   aiStudioAgent:
     aiStudioAgent:
       promptTemplateId: __AGENT_ID__
